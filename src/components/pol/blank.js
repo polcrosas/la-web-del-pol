@@ -1,0 +1,10 @@
+
+import React from 'react';
+
+const BlankComponent = () => {
+  return (
+    <div></div>
+  );
+};
+
+export default BlankComponent;

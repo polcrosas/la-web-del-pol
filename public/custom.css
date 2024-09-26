@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Handjet:wght@100;200;300;400;500;600;700;800;900&family=Oswald:wght@200;300;400;500;600;700&family=Spectral:wght@200&display=swap'); 
+/* 'Handjet', cursive */
+
+@import url('https://fonts.googleapis.com/css2?family=Signika+Negative:wght@300;400;500;600;700&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Philosopher:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+@font-face {
+    font-family: "BarcodeFont";
+    src: url("../fonts/Paskowy.ttf");
+  }
+  
+
+.my-element {
+    font-family: 'MainCustomFont', sans-serif;
+    font-size: medium;
+  }
+
+
+/* .my-element {
+    font-family: '', monospace;
+    font-size: small;
+  } */
+
+.barcode-font {
+    font-family: 'BarcodeFont', sans-serif;
+    font-size: larger;
+}
+
+
+@keyframes text-illumination {
+  0% {
+    color: rgba(0,0,0,0); /* Start with transparent color */
+  }
+  50% {
+    color: rgba(0,0,0,0.5); /* Middle stage with semi-transparent color */
+  }
+  100% {
+    color: rgba(0,0,0,1); /* Fully visible color */
+  }
+}
