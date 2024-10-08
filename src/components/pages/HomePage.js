@@ -12,6 +12,15 @@ export const HomePage = () => {
   
     //2024
 
+
+    {
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/benyart/prova.jpg", //2024. guerra mundial
+      pageTo: "/guerra_mundial",
+      artist: "majin",
+      isDownload: false,
+      text: "video for ben yart's mixtape with dome."
+    },
+    
     {
       image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/foflas.jpg", //2024. foflas
       pageTo: "/foflas",

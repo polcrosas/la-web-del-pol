@@ -34,6 +34,7 @@ import Inout from "./components/pol/inout";
 import Tarot from "./components/pol/tarot";
 import Volum from "./components/pol/volum";
 import { Foflas } from "./components/pol/foflas";
+import { GuerraMundial } from './components/pol/guerra_mundial';
 
 const App = () => {
   return (
@@ -78,6 +79,7 @@ const App = () => {
             <Route path="/tarot" element={<Tarot />} />
             <Route path="/volum" element={<Volum />} />
             <Route path="/foflas" element={<Foflas />} />
+            <Route path="/guerra_mundial" element={<GuerraMundial />} />
 
             <Route path="/" element={<Navigate to="/pol" />} />
             <Route path="*" element={<Navigate to="/pol" />} />
