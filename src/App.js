@@ -18,7 +18,7 @@ import { PeepingDeath } from "./components/pages/dome/PeepingDeath";
 import { Chiuhuahua } from "./components/pages/pol/Chiuhuahua";
 import { Miscellaneous } from "./components/pages/dome/Miscellaneous";
 import BlankComponent from "./components/pol/blank";
-import { Video_Camara } from "./components/pol/en_que_momento_esta_camara_deja_de_serlo";
+import { Video_Camara } from "./components/pol/juego_del_telefono";
 import { Cundits_EU } from "./components/pol/cundits_en_euskalherria";
 import { Vertical } from "./components/pol/vertical";
 import { Rxtx } from "./components/pol/rxtx";
@@ -60,7 +60,7 @@ const App = () => {
 
             <Route path="/blank" element={<BlankComponent />} />
             <Route
-              path="/en_que_momento_esta_camara_deja_de_serlo"
+              path="/juego_del_telefono"
               element={<Video_Camara />}
             />
             <Route path="/cundits_en_euskalherria" element={<Cundits_EU />} />

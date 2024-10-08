@@ -46,7 +46,7 @@ export const HomePage = () => {
 
     {
       image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat16.jpg",//2023. ¿En qué momento esta cámara deja de serlo?
-      pageTo: "/en_que_momento_esta_camara_deja_de_serlo",
+      pageTo: "/juego_del_telefono",
       artist: "polcrosas",
       isDownload: false, 
       text: "video essay about language and cameras.  "
