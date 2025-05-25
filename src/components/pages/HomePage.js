@@ -10,6 +10,17 @@ export const HomePage = () => {
 
   const images = [
   
+    //2025
+    {
+      image: "https://i.imgur.com/lsJ7PlY.jpg", //2024. guerra mundial
+      pageTo: "https://www.lacapella.barcelona/es/caca-banal",
+      artist: "majin",
+      isDownload: true,
+      text: "exhibition in La Capella with atractive_smithers."
+    },
+
+
+
     //2024
 
 

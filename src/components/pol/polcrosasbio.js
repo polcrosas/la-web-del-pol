@@ -18,7 +18,11 @@ const PolCrosasBio = () => {
           <p className="mb-80">say hi: pol.crosas@gmail.com</p>
 
           {/* Social media links */}
-          <div className="mb-8 flex space-x-4">
+          <div className="mb-8 flex space-x-4 font-custom"
+          style={{
+            fontFamily: 'sans-serif'
+          }}
+          >
             <a 
               href="https://www.instagram.com/huidaespectacular1999" 
               target="_blank" 
