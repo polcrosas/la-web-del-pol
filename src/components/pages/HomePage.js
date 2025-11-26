@@ -13,7 +13,7 @@ export const HomePage = () => {
     //2025
     {
       image: "https://i.imgur.com/lsJ7PlY.jpg", //2024. guerra mundial
-      pageTo: "https://www.danielmorenoroldan.com/",
+      pageTo: "https://www.lacapella.barcelona/es/programacion/exposiciones/caca-banal/",
       artist: "majin",
       isDownload: true,
       text: "exhibition in La Capella with atractive_smithers."
