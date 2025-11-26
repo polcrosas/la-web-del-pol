@@ -37,14 +37,14 @@ export const HomePage = () => {
       pageTo: "/foflas",
       artist: "majin",
       isDownload: false,
-      text: "AI generated shitpost with dome."
+      text: "AI generated shitpost with el foflas."
     },
     {
       image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat17.jpg", //2024. f. (el regreso de la filoxera)
       pageTo: "/f",
       artist: "majin",
       isDownload: false,
-      text: "documentary of a festival in Navarra, Spain, with dome.  "
+      text: "documentary of a festival in Navarra with dome.  "
     },
    
     {
@@ -52,7 +52,7 @@ export const HomePage = () => {
       pageTo: "/inout",
       artist: "polcrosas",
       isDownload: false,
-      text: 'exhibition in Tabakalera, Donosti.  '
+      text: 'exhibition in Tabakalera for my final degree MA thesis.  '
     },
 
     {
@@ -91,7 +91,7 @@ export const HomePage = () => {
       pageTo: "/tapetum_lucidum",
       artist: "majin",
       isDownload: false,
-      text: "custom dreambooth model images of dogs, with dome.  "
+      text: "custom dreambooth model images of dogs with dome.  "
     },
 
    // {
@@ -189,7 +189,7 @@ export const HomePage = () => {
       pageTo: "https://artefactosnativos.com/hiperpublicacion.html",
       artist: "majin",
       isDownload: true,
-      text: "24h nonstop publishing residency.  "
+      text: "24h nonstop publishing residency with eze.  "
     },
 
     {

@@ -29,10 +29,17 @@ const tarotImages = [
 const Tarot = () => {
   const [question, setQuestion] = useState('');
   const [spread, setSpread] = useState([]);
+  const [error, setError] = useState('');
 
   const generateSpread = () => {
+    if (!question.trim()) {
+      setError('ask something smh...');
+      return;
+    }
+
+    setError('');
     const shuffledDeck = [...tarotImages].sort(() => 0.5 - Math.random());
-    const drawnCards = shuffledDeck.slice(0, 10); // Draw 10 cards for Celtic Cross
+    const drawnCards = shuffledDeck.slice(0, 10);
     setSpread(drawnCards);
   };
 
@@ -40,34 +47,30 @@ const Tarot = () => {
     setQuestion(e.target.value);
   };
 
-  const containerStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    padding: '5px',
-    backgroundColor: 'white',
-    color: 'black',
+  const questionInputStyle = {
+    padding: '10px',
+    fontSize: '16px',
+    width: '100%',
+    maxWidth: '400px',
+    marginBottom: '10px',
   };
 
-  // Adjust card size for mobile and desktop
   const cardStyle = {
-    width: '100%', 
+    width: '100%',
     height: 'auto',
   };
 
-  // Dynamic grid for mobile and desktop
   const gridContainerStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(7, 1fr)', // 7 columns for large screens
+    gridTemplateColumns: 'repeat(7, 1fr)',
     gap: '10px',
     justifyItems: 'center',
     marginTop: '20px',
   };
 
-  // Update card position for better layout
   const cardPosition = {
     card1: { gridColumn: '4', gridRow: '3' },
-    card2: { gridColumn: '4', gridRow: '3', transform: 'rotate(90deg)' }, // Overlaps card1 horizontally
+    card2: { gridColumn: '4', gridRow: '3', transform: 'rotate(90deg)' },
     card3: { gridColumn: '4', gridRow: '4' },
     card4: { gridColumn: '3', gridRow: '3' },
     card5: { gridColumn: '4', gridRow: '2' },
@@ -78,30 +81,15 @@ const Tarot = () => {
     card10: { gridColumn: '7', gridRow: '2' }
   };
 
-  const questionInputStyle = {
-    padding: '10px',
-    fontSize: '16px',
-    width: '100%',
-    maxWidth: '400px',
-    marginBottom: '20px',
-  };
-
-  const buttonStyle = {
-    padding: '10px 20px',
-    backgroundColor: '#4CAF50',
-    color: 'white',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: '16px',
-  };
-
   return (
-    <div className="bg-white h-screen">
+    <div className="bg-white min-h-screen">
       <LogoHeader />
+
       <div className="flex justify-center">
         <div className="flex justify-center flex-col lg:w-1/6 md:w-1/5 sm:w-1/2 items-center">
           <h1 className="text-2xl font-bold">celtic cross spread</h1>
           <p>ask your question below:</p>
+
           <input
             type="text"
             value={question}
@@ -109,7 +97,17 @@ const Tarot = () => {
             placeholder="your question..."
             style={questionInputStyle}
           />
-          <button onClick={generateSpread} className="border-2 border-dashed border-black border-opacity-0 hover:border-opacity-100 px-2 py-1 text-left rounded-xl">
+
+          {error && (
+            <p className="text-black text-sm mt-1">
+              {error}
+            </p>
+          )}
+
+          <button
+            onClick={generateSpread}
+            className="border-2 border-dashed border-black border-opacity-0 hover:border-opacity-100 px-2 py-1 text-left rounded-xl mt-3"
+          >
             spread
           </button>
         </div>
