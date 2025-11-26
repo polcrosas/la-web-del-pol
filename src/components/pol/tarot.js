@@ -23,7 +23,7 @@ const tarotImages = [
   'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/dogs/dogs_18.png',
   'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/dogs/dogs_19.png',
   'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/dogs/dogs_20.png',
-  'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/dogs/dogs_22.png'
+  'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/dogs/dogs_21.png',
 ];
 
 const Tarot = () => {
