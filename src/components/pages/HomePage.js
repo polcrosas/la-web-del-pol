@@ -12,11 +12,12 @@ export const HomePage = () => {
   
     //2025
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/capella/capella.jpg", //2024. guerra mundial
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/capella/capella.jpg",
       pageTo: "https://www.lacapella.barcelona/es/programacion/exposiciones/caca-banal/",
       artist: "majin",
       isDownload: true,
-      text: "exhibition in La Capella with atractive_smithers."
+      text: "exhibition in La Capella with atractive_smithers.",
+      year: "2025"
     },
 
 
@@ -25,49 +26,55 @@ export const HomePage = () => {
 
 
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/benyart/prova.jpg", //2024. guerra mundial
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/benyart/prova.jpg",
       pageTo: "/guerra_mundial",
       artist: "majin",
       isDownload: false,
-      text: "video for ben yart's mixtape with dome."
+      text: "video for ben yart's mixtape with dome.",
+      year: "2024"
     },
     
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/foflas.jpg", //2024. foflas
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/foflas.jpg",
       pageTo: "/foflas",
       artist: "majin",
       isDownload: false,
-      text: "AI generated shitpost with el foflas."
+      text: "AI generated shitpost with el foflas.",
+      year: "2024"
     },
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat17.jpg", //2024. f. (el regreso de la filoxera)
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat17.jpg",
       pageTo: "/f",
       artist: "majin",
       isDownload: false,
-      text: "documentary of a festival in Navarra with dome.  "
+      text: "documentary of a festival in Navarra with dome.  ",
+      year: "2024"
     },
    
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat3.jpg",//2023. inout
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat3.jpg",
       pageTo: "/inout",
       artist: "polcrosas",
       isDownload: false,
-      text: 'exhibition in Tabakalera for my final degree MA thesis.  '
+      text: 'exhibition in Tabakalera for my final degree MA thesis.  ',
+      year: "2023"
     },
 
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat16.jpg",//2023. ¿En qué momento esta cámara deja de serlo?
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat16.jpg",
       pageTo: "/juego_del_telefono",
       artist: "polcrosas",
       isDownload: false, 
-      text: "video essay about language and cameras.  "
+      text: "video essay about language and cameras.  ",
+      year: "2023"
     },
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat18.jpg",//2023. Els Cundits en Euskal Herría
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat18.jpg",
       pageTo: "/cundits_en_euskalherria",
       artist: "polcrosas",
       isDownload: false, 
-      text: "documentary about my friends music tour.  "
+      text: "documentary about my friends music tour.  ",
+      year: "2023"
     },
 
 
@@ -87,11 +94,12 @@ export const HomePage = () => {
     // // },
 
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat6.jpg",//2023. tapetum lucidum
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat6.jpg",
       pageTo: "/tapetum_lucidum",
       artist: "majin",
       isDownload: false,
-      text: "custom dreambooth model images of dogs with dome.  "
+      text: "custom dreambooth model images of dogs with dome.  ",
+      year: "2023"
     },
 
    // {
@@ -146,20 +154,21 @@ export const HomePage = () => {
     // },
 
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat4.jpg",//2022. mu
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat4.jpg",
       pageTo: "/mu",
       artist: "polcrosas",
       isDownload: false,
-      text: "monographic artist book.  "
+      text: "monographic artist book.  ",
+      year: "2022"
     },
 
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat7.jpg",//2022. carglass
-      pageTo:
-        "/carglass",
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat7.jpg",
+      pageTo: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/pol/pdfs/carglass.pdf",
       artist: "polcrosas",
-      isDownload: false,
-      text: "atractive_smithers fanzine.  "
+      isDownload: true,
+      text: "atractive_smithers fanzine.  ",
+      year: "2022"
     },
 
     //2021
@@ -175,57 +184,59 @@ export const HomePage = () => {
 
  
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat8.jpg",//2021. els cundits
-      pageTo:
-        "/cundits",
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat8.jpg",
+      pageTo: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/pol/pdfs/cundits.pdf",
       artist: "polcrosas",
-      isDownload: false,
-      text: "els cundits fanzine.  "
-      
+      isDownload: true,
+      text: "els cundits fanzine.  ",
+      year: "2021"
     },
 
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat5.jpg",//2021. hiperpublicación 100/24
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat5.jpg",
       pageTo: "https://artefactosnativos.com/hiperpublicacion.html",
       artist: "majin",
       isDownload: true,
-      text: "24h nonstop publishing residency with eze.  "
+      text: "24h nonstop publishing residency with eze.  ",
+      year: "2021"
     },
 
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat15.jpg",//2021. i'm vertical but i'd rather be horizontal
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat15.jpg",
       pageTo: "/vertical_but_rather_be_horizontal",
       artist: "polcrosas",
       isDownload: false,
-      text: "video poem with cameras and the sea.  "
+      text: "video poem with cameras and the sea.  ",
+      year: "2021"
     },
 
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat10.jpg",//2021. dog's tarot
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat10.jpg",
       pageTo: "/tarot",
       artist: "polcrosas",
       isDownload: false,
-      text: "tarot set of dog panoramics.  "
+      text: "tarot set of dog panoramics.  ",
+      year: "2021"
     },
 
  //2020
 
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat12.jpg",//2020. rxtx
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat12.jpg",
       pageTo: "/rxtx",
       artist: "polcrosas",
       isDownload: false,
-      text: "virtual flamethrower in an online exhibition.  "
+      text: "virtual flamethrower in an online exhibition.  ",
+      year: "2020"
     },
 
-   
-
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat.jpg",//2020. serbal.pntic.mec.es
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat.jpg",
       pageTo: "/serbal",
       artist: "majin",
       isDownload: false,
-      text: "fanzine made during lockdown.  "
+      text: "fanzine made during lockdown.  ",
+      year: "2020"
     },
 
     // {
@@ -243,12 +254,12 @@ export const HomePage = () => {
     //  text: "1st volume of a photobook series.  "
     //},
     {
-      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat13.jpg", //2021. cosas de casa
-      pageTo:
-        "/cosas_de_casa",
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat13.jpg",
+      pageTo: "/cosas_de_casa",
       artist: "polcrosas",
       isDownload: false,
-      text: "video series made at home.  "
+      text: "video series made at home.  ",
+      year: "2020"
     },
 
     // {
@@ -307,6 +318,7 @@ export const HomePage = () => {
               artist={image.artist}
               isDownload={image.isDownload}
               text={image.text}
+              year={image.year}
             />
           ))}
         </div>
