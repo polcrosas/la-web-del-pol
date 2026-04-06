@@ -23,7 +23,7 @@ export const ImageMain = ({ image, pageTo, artist, isDownload, text = "", year =
   );
 
   return (
-    <div className='justify-center w-full relative bg-gray-100' onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <div className='justify-center w-full relative border-r border-b border-black' onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       {isDownload ? (
         <a href={pageTo} target="_blank" rel="noreferrer">
           {imgEl}
