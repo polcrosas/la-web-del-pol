@@ -6,11 +6,11 @@ const PolCrosasBio = () => {
     <div className="min-h-screen bg-white flex flex-col">
 
       <LogoHeader className='' />
-      <div className="text-black font-black p-6 flex flex-col md:flex-row">
-        <div className="md:w-1/2">
+      <div className="text-black font-black p-6 flex flex-col md:flex-row flex-1">
+        <div className="md:w-1/2 flex flex-col">
 
           <p className="mt-8 mr-8">
-Pol Crosas (b. 1999, Barcelona) is an artist and curator whose practice encompasses film, publishing, artificial intelligence, and visual/digital arts. He holds a Bachelor’s degree in Fine Arts from the University of Barcelona and an MA in Curation and Creation at Elías Querejeta Zine Eskola. He is a member of the obobo collective, working alongside Domenec Miralles and Gustavo Cilleruelo in the field of artificial intelligence-driven creation. He is also a member of atractive_smithers, Barcelona based shitposting group.
+Pol Crosas (b. 1999, Barcelona) is an artist and curator whose practice encompasses film, publishing, artificial intelligence, and visual/digital arts. He holds a Bachelor's degree in Fine Arts from the University of Barcelona and an MA in Curation and Creation at Elías Querejeta Zine Eskola. He is a member of the obobo collective, working alongside Domenec Miralles and Gustavo Cilleruelo in the field of artificial intelligence-driven creation. He is also a member of atractive_smithers, Barcelona based shitposting group.
           </p>
 
           <p className="mt-6 mr-8 mb-8">
@@ -57,10 +57,11 @@ Pol Crosas (b. 1999, Barcelona) is an artist and curator whose practice encompas
               youtube
             </a>
           </div>
+
+          <div className="mt-auto">
+            <img src="https://majindonpatch-public.s3.eu-west-2.amazonaws.com/capella/logos.png" alt="logos" className="w-4/5" />
+          </div>
         </div>
-      </div>
-      <div className="mt-auto p-6">
-        <img src="https://majindonpatch-public.s3.eu-west-2.amazonaws.com/capella/logos.png" alt="logos" style={{width: '48%'}} />
       </div>
     </div>
   );

@@ -44,7 +44,8 @@ const App = () => {
         <Router>
           <ScrollToTop></ScrollToTop>
           <Routes>
-            <Route path="/:artistName" element={<HomePage />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/pol" element={<Navigate to="/" />} />
             <Route
               path="/metal_gear_feelings"
               element={<MetalGearFeelings />}
@@ -83,8 +84,9 @@ const App = () => {
             <Route path="/foflas" element={<Foflas />} />
             <Route path="/guerra_mundial" element={<GuerraMundial />} />
 
-            <Route path="/" element={<Navigate to="/pol" />} />
-            <Route path="*" element={<Navigate to="/pol" />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/pol" element={<Navigate to="/" />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Router>
       </MantineProvider>
