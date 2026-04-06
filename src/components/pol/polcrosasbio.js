@@ -3,7 +3,7 @@ import { LogoHeader } from "../image/LogoHeader";
 
 const PolCrosasBio = () => {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
 
       <LogoHeader className='' />
       <div className="text-black font-black p-6 flex flex-col md:flex-row">
@@ -59,7 +59,7 @@ Pol Crosas (b. 1999, Barcelona) is an artist and curator whose practice encompas
           </div>
         </div>
       </div>
-      <div className="p-6">
+      <div className="mt-auto p-6">
         <img src="https://majindonpatch-public.s3.eu-west-2.amazonaws.com/capella/logos.png" alt="logos" style={{width: '48%'}} />
       </div>
     </div>

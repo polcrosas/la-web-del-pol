@@ -34,7 +34,7 @@ export const ImageMain = ({ image, pageTo, artist, isDownload, text = "", year =
         </Link>
       )}
       {text && (
-        <div className={`absolute bottom-0 left-0 right-0 z-10 bg-transparent py-2 rounded text-black font-bold text-sm ${isHovered ? 'opacity-100' : 'opacity-0'} transition duration-300 ease-in-out px-4 pb-4 flex justify-between items-end`}>
+        <div className={`absolute bottom-0 left-0 right-0 z-10 bg-transparent py-2 rounded text-black font-bold text-sm md:opacity-0 ${isHovered ? 'md:opacity-100' : ''} transition duration-300 ease-in-out px-4 pb-4 flex justify-between items-end`}>
           <p>{text}</p>
           {year && <p className="ml-4 shrink-0">{year}</p>}
         </div>
