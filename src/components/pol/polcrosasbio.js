@@ -59,6 +59,9 @@ Pol Crosas (b. 1999, Barcelona) is an artist and curator whose practice encompas
           </div>
         </div>
       </div>
+      <div className="p-6">
+        <img src="https://majindonpatch-public.s3.eu-west-2.amazonaws.com/capella/logos.png" alt="logos" style={{width: '48%'}} />
+      </div>
     </div>
   );
 };

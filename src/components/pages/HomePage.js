@@ -12,7 +12,7 @@ export const HomePage = () => {
   
     //2025
     {
-      image: "https://i.imgur.com/lsJ7PlY.jpg", //2024. guerra mundial
+      image: "https://majindonpatch-public.s3.eu-west-2.amazonaws.com/capella/capella.jpg", //2024. guerra mundial
       pageTo: "https://www.lacapella.barcelona/es/programacion/exposiciones/caca-banal/",
       artist: "majin",
       isDownload: true,
