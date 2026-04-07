@@ -31,6 +31,35 @@ const Home = () => {
   const [tarotSpread, setTarotSpread] = useState([]);
   const [tarotError, setTarotError] = useState('');
   const [itemsPerRow, setItemsPerRow] = useState(3);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [loadedCount, setLoadedCount] = useState(0);
+  
+  // Preload all project images
+  useEffect(() => {
+    const imageUrls = projects.map(p => p.image);
+    let loaded = 0;
+    
+    const loadImage = (url) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          loaded++;
+          setLoadedCount(loaded);
+          resolve();
+        };
+        img.onerror = () => {
+          loaded++;
+          setLoadedCount(loaded);
+          resolve(); // Still resolve to not block the loading screen
+        };
+        img.src = url;
+      });
+    };
+    
+    Promise.all(imageUrls.map(loadImage)).then(() => {
+      setImagesLoaded(true);
+    });
+  }, []);
   
   // Update itemsPerRow based on actual grid behavior
   // CSS uses: grid-template-columns: repeat(auto-fill, minmax(400px, 1fr))
@@ -438,6 +467,23 @@ const Home = () => {
     </div>
   );
 
+  // Show loading screen while images are loading
+  if (!imagesLoaded) {
+    const totalImages = projects.length;
+    const percentage = Math.round((loadedCount / totalImages) * 100);
+    
+    return (
+      <div className="loading-screen">
+        <div className="loading-content">
+          <h2>loading...</h2>
+          <div className="loading-bar">
+            <div className="loading-progress" style={{ width: `${percentage}%` }}></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="container">
       <header className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
