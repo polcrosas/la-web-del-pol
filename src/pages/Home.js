@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const tarotImages = [
   'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/dogs/dogs_0.png',
@@ -33,6 +33,8 @@ const Home = () => {
   const [itemsPerRow, setItemsPerRow] = useState(3);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [loadedCount, setLoadedCount] = useState(0);
+  const [tarotImagesLoading, setTarotImagesLoading] = useState(false);
+  const dropdownRef = useRef(null);
   
   // Preload all project images
   useEffect(() => {
@@ -385,21 +387,61 @@ const Home = () => {
     return Math.floor(index / itemsPerRow);
   };
 
+  // Auto-scroll to dropdown when a project opens
+  useEffect(() => {
+    if (openProject && dropdownRef.current) {
+      // Small delay to ensure dropdown is rendered
+      setTimeout(() => {
+        const dropdownTop = dropdownRef.current.getBoundingClientRect().top + window.pageYOffset;
+        const offset = 85; // Offset to leave space for project cards above
+        window.scrollTo({
+          top: dropdownTop - offset,
+          behavior: 'smooth'
+        });
+      }, 100);
+    }
+  }, [openProject]);
+
   const generateTarotSpread = () => {
     if (!tarotQuestion.trim()) {
       setTarotError('ask something smh...');
       return;
     }
     setTarotError('');
+    setTarotImagesLoading(true);
     const shuffledDeck = [...tarotImages].sort(() => 0.5 - Math.random());
     const drawnCards = shuffledDeck.slice(0, 10);
-    setTarotSpread(drawnCards);
+    
+    // Preload tarot images
+    let loadedTarotCount = 0;
+    const loadTarotImage = (url) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          loadedTarotCount++;
+          if (loadedTarotCount === drawnCards.length) {
+            setTarotImagesLoading(false);
+          }
+          resolve();
+        };
+        img.onerror = () => {
+          loadedTarotCount++;
+          if (loadedTarotCount === drawnCards.length) {
+            setTarotImagesLoading(false);
+          }
+          resolve();
+        };
+        img.src = url;
+      });
+    };
+    
+    Promise.all(drawnCards.map(loadTarotImage)).then(() => {
+      setTarotSpread(drawnCards);
+    });
   };
 
   const renderTarotInteractive = () => (
     <div>
-      <p style={{ marginBottom: '20px', textAlign: 'center' }}>celtic cross spread</p>
-      
       <div style={{ maxWidth: '400px', margin: '30px auto', textAlign: 'center' }}>
         <p style={{ marginBottom: '10px' }}>ask your question below:</p>
         <input
@@ -430,7 +472,21 @@ const Home = () => {
         </button>
       </div>
 
-      {tarotSpread.length > 0 && (
+      {tarotImagesLoading && (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            style={{ width: '75px', height: '75px' }}
+          >
+            <source src="/charging_gif.mp4" type="video/mp4" />
+          </video>
+        </div>
+      )}
+
+      {tarotSpread.length > 0 && !tarotImagesLoading && (
         <div className="tarot-spread-grid">
           <div style={{ gridColumn: '4', gridRow: '3' }}>
             <img src={tarotSpread[0]} alt="Card 1" style={{ width: '100%' }} />
@@ -469,17 +525,17 @@ const Home = () => {
 
   // Show loading screen while images are loading
   if (!imagesLoaded) {
-    const totalImages = projects.length;
-    const percentage = Math.round((loadedCount / totalImages) * 100);
-    
     return (
       <div className="loading-screen">
-        <div className="loading-content">
-          <h2>loading...</h2>
-          <div className="loading-bar">
-            <div className="loading-progress" style={{ width: `${percentage}%` }}></div>
-          </div>
-        </div>
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="loading-video"
+        >
+          <source src="/charging_gif.mp4" type="video/mp4" />
+        </video>
       </div>
     );
   }
@@ -560,7 +616,7 @@ const Home = () => {
               
               {/* Show dropdown after the last item in the row (or after blank squares for last row) */}
               {(showDropdownAfter || (isLastProject && openProject && currentRow === openProjectRow)) && (
-                <div className="project-dropdown">
+                <div className="project-dropdown" ref={dropdownRef}>
                   <div className="dropdown-content">
                     {/* Handle external projects with button */}
                     {projects.find(p => p.id === openProject)?.isExternal ? (
