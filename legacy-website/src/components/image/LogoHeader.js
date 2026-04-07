@@ -6,7 +6,7 @@ export const LogoHeader = ({ onBioToggle, bioOpen }) => {
   const isHome = pathname === '/';
 
   return (
-    <div className="flex justify-between items-center px-4 py-3 mx-4 border border-black mb-0">
+    <div className="flex justify-between items-center px-4 py-3 mx-4 border border-black mb-0 bg-white" style={{borderRightWidth: '1px'}}>
       <Link to="/" className="text-black font-bold">pol crosas</Link>
       {isHome && (
         <button

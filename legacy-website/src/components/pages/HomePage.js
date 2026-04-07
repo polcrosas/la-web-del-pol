@@ -18,7 +18,7 @@ export const HomePage = () => {
       pageTo: "https://www.lacapella.barcelona/es/programacion/exposiciones/caca-banal/",
       artist: "majin",
       isDownload: true,
-      text: "exhibition in La Capella with atractive_smithers.",
+      text: "atractive_smithers exhibition in La Capella.",
       year: "2025"
     },
 
@@ -49,7 +49,7 @@ export const HomePage = () => {
       pageTo: "/f",
       artist: "majin",
       isDownload: false,
-      text: "documentary of a festival in Navarra with dome.  ",
+      text: "barranco fest aftermovie with dome.  ",
       year: "2024"
     },
    
@@ -58,7 +58,7 @@ export const HomePage = () => {
       pageTo: "/inout",
       artist: "polcrosas",
       isDownload: false,
-      text: 'exhibition in Tabakalera for my final degree MA thesis.  ',
+      text: 'final degree MA thesis exhibited in Tabakalera.  ',
       year: "2023"
     },
 
@@ -100,7 +100,7 @@ export const HomePage = () => {
       pageTo: "/tapetum_lucidum",
       artist: "majin",
       isDownload: false,
-      text: "custom dreambooth model images of dogs with dome.  ",
+      text: "custom dreambooth dog model with dome.  ",
       year: "2023"
     },
 
@@ -307,13 +307,13 @@ export const HomePage = () => {
 
 
   return (
-    <div className="bg-white">
+    <div className="bg-white pt-4">
       <LogoHeader onBioToggle={() => setBioOpen(o => !o)} bioOpen={bioOpen} />
 
       {/* bio dropdown */}
       {bioOpen && (
-        <div className="mx-4 border-l border-r border-b border-black grid sm:grid-cols-1 lg:grid-cols-3">
-          <div className="lg:col-span-2 lg:border-r border-b border-black p-6">
+        <div className="mx-4 border-l border-r border-b border-black grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          <div className="md:col-span-1 lg:col-span-2 md:border-r lg:border-r border-black p-6">
             <p className="mb-5 text-sm leading-relaxed font-bold">
               Pol Crosas (b. 1999, Barcelona) is an artist and curator whose practice encompasses film, publishing, artificial intelligence, and visual/digital arts. He holds a Bachelor's degree in Fine Arts from the University of Barcelona and an MA in Curation and Creation at Elías Querejeta Zine Eskola. He is a member of the obobo collective, working alongside Domenec Miralles and Gustavo Cilleruelo in the field of artificial intelligence-driven creation. He is also a member of atractive_smithers, Barcelona based shitposting group.
             </p>
@@ -321,7 +321,7 @@ export const HomePage = () => {
               Pol has curated and exhibited in various spaces in Barcelona, San Sebastián, and London. He has created and installed publications, video pieces, and sculptures in venues such as Tabakalera, Colour Factory London, Arts Libris, Gallery46, among others. He has curated film cycles, collaborative publications, and concert series at Arts Santa Mònica, Tabakalera, Rocío Santa Cruz, Galeria dels Àngels, Dabadaba, and Pumarejo, among others. He has published or self-published over 20 artist books, fanzines, catalogs, and comics.
             </p>
           </div>
-          <div className="border-b border-black p-6 flex flex-col text-sm font-bold gap-3">
+          <div className="md:col-span-1 lg:col-span-1 p-6 flex flex-col text-sm font-bold gap-3">
             <a href="https://www.instagram.com/huidaespectacular1999" target="_blank" rel="noreferrer" className="hover:opacity-50">instagram</a>
             <a href="https://x.com/polcrosas" target="_blank" rel="noreferrer" className="hover:opacity-50">twitter</a>
             <a href="https://vimeo.com/pol" target="_blank" rel="noreferrer" className="hover:opacity-50">vimeo</a>
@@ -331,8 +331,8 @@ export const HomePage = () => {
         </div>
       )}
       
-      <div className="flex flex-col items-center justify-center">
-        <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mx-4" style={{borderLeft: '1px solid black'}}>
+      <div className="mx-4 border-l border-black">
+        <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {filteredImages.map((image, index) => (
             <ImageMain
               key={index}
@@ -349,9 +349,11 @@ export const HomePage = () => {
           ))}
         </div>
       </div>
-      <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mx-4 border-l border-r border-b border-black">
-        <div className="hidden lg:block border-r border-black" />
-        <div className="flex items-center justify-center p-4 lg:border-r border-black">
+
+      
+      <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mx-4 border-l  border-r border-b border-black">
+        <div className="hidden lg:block ml-1 border-r border-black" />
+        <div className="flex items-center justify-center p-4 md:border-r border-black">
           <img src="https://majindonpatch-public.s3.eu-west-2.amazonaws.com/capella/logos.png" alt="logos" className="w-full" />
         </div>
         <div className="hidden lg:block" />
