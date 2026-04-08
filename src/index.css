@@ -348,7 +348,7 @@ a:hover {
 .image-gallery img {
   width: 100%;
   height: auto;
-  border: 1px solid #000;
+  border: none;
 }
 
 .bio-section {
@@ -373,6 +373,37 @@ a:hover {
 
 .bio-links a {
   font-weight: bold;
+}
+
+.bio-socials {
+  display: flex;
+  gap: 15px;
+  flex-wrap: nowrap;
+  margin-top: 30px;
+}
+
+.bio-socials a {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .bio-socials {
+    gap: 0;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .bio-socials {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .bio-socials {
+    font-size: 13px;
+  }
 }
 
 .blank-square {
@@ -496,7 +527,7 @@ a:hover {
 .serbal-layout .serbal-image {
   flex: 0 0 300px;
   max-width: 300px;
-  border: 1px solid #000;
+  border: none;
 }
 
 @media (max-width: 768px) {

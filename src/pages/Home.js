@@ -34,6 +34,9 @@ const Home = () => {
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [loadedCount, setLoadedCount] = useState(0);
   const [tarotImagesLoading, setTarotImagesLoading] = useState(false);
+  const [inoutImagesLoaded, setInoutImagesLoaded] = useState(false);
+  const [tapetumImagesLoaded, setTapetumImagesLoaded] = useState(false);
+  const [muImagesLoaded, setMuImagesLoaded] = useState(false);
   const dropdownRef = useRef(null);
   
   // Preload all project images
@@ -375,7 +378,107 @@ const Home = () => {
 
   const handleProjectClick = (project) => {
     setBioOpen(false); // Close bio when opening a project
-    setOpenProject(openProject === project.id ? null : project.id);
+    const newOpenProject = openProject === project.id ? null : project.id;
+    setOpenProject(newOpenProject);
+    
+    // If opening inout project, preload its images
+    if (newOpenProject === 'inout') {
+      setInoutImagesLoaded(false);
+      const inoutProject = projects.find(p => p.id === 'inout');
+      if (inoutProject?.content?.images) {
+        let loadedInoutCount = 0;
+        const totalInoutImages = inoutProject.content.images.length;
+        
+        const loadInoutImage = (url) => {
+          return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              loadedInoutCount++;
+              if (loadedInoutCount === totalInoutImages) {
+                setInoutImagesLoaded(true);
+              }
+              resolve();
+            };
+            img.onerror = () => {
+              loadedInoutCount++;
+              if (loadedInoutCount === totalInoutImages) {
+                setInoutImagesLoaded(true);
+              }
+              resolve();
+            };
+            img.src = url;
+          });
+        };
+        
+        Promise.all(inoutProject.content.images.map(loadInoutImage));
+      }
+    }
+    
+    // If opening tapetum project, preload its images
+    if (newOpenProject === 'tapetum') {
+      setTapetumImagesLoaded(false);
+      const tapetumProject = projects.find(p => p.id === 'tapetum');
+      if (tapetumProject?.content?.images) {
+        let loadedTapetumCount = 0;
+        const totalTapetumImages = tapetumProject.content.images.length;
+        
+        const loadTapetumImage = (url) => {
+          return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              loadedTapetumCount++;
+              if (loadedTapetumCount === totalTapetumImages) {
+                setTapetumImagesLoaded(true);
+              }
+              resolve();
+            };
+            img.onerror = () => {
+              loadedTapetumCount++;
+              if (loadedTapetumCount === totalTapetumImages) {
+                setTapetumImagesLoaded(true);
+              }
+              resolve();
+            };
+            img.src = url;
+          });
+        };
+        
+        Promise.all(tapetumProject.content.images.map(loadTapetumImage));
+      }
+    }
+    
+    // If opening mu project, preload its images
+    if (newOpenProject === 'mu') {
+      setMuImagesLoaded(false);
+      const muProject = projects.find(p => p.id === 'mu');
+      if (muProject?.content?.images) {
+        let loadedMuCount = 0;
+        const totalMuImages = muProject.content.images.length;
+        
+        const loadMuImage = (url) => {
+          return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+              loadedMuCount++;
+              if (loadedMuCount === totalMuImages) {
+                setMuImagesLoaded(true);
+              }
+              resolve();
+            };
+            img.onerror = () => {
+              loadedMuCount++;
+              if (loadedMuCount === totalMuImages) {
+                setMuImagesLoaded(true);
+              }
+              resolve();
+            };
+            img.src = url;
+          });
+        };
+        
+        Promise.all(muProject.content.images.map(loadMuImage));
+      }
+    }
   };
 
   const getProjectIndex = (projectId) => {
@@ -576,7 +679,7 @@ const Home = () => {
           <p style={{ marginBottom: '15px', lineHeight: '1.6' }}>
             pol has curated and exhibited in various spaces in barcelona, san sebastián, and london. he has created and installed publications, video pieces, and sculptures in venues such as tabakalera, colour factory london, arts libris, gallery46, among others. he has curated film cycles, collaborative publications, and concert series at arts santa mònica, tabakalera, rocío santa cruz, galeria dels àngels, dabadaba, and pumarejo, among others. he has published or self-published over 20 artist books, fanzines, catalogs, and comics.
           </p>
-          <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+          <div className="bio-socials">
             <a href="https://www.instagram.com/huidaespectacular1999" target="_blank" rel="noreferrer">instagram</a>
             <a href="https://x.com/polcrosas" target="_blank" rel="noreferrer">twitter</a>
             <a href="https://vimeo.com/pol" target="_blank" rel="noreferrer">vimeo</a>
@@ -681,7 +784,7 @@ const Home = () => {
                                   <img
                                     src={projects.find(p => p.id === openProject).content.image}
                                     alt={projects.find(p => p.id === openProject).title}
-                                    style={{ width: '100%', maxWidth: '600px', marginBottom: '20px', border: '1px solid #000' }}
+                                    style={{ width: '100%', maxWidth: '600px', marginBottom: '20px' }}
                                   />
                                 )}
                                 
@@ -740,11 +843,27 @@ const Home = () => {
                         )}
                         
                         {projects.find(p => p.id === openProject).content.images && (
-                          <div className="image-gallery">
-                            {projects.find(p => p.id === openProject).content.images.map((img, i) => (
-                              <img key={i} src={img} alt={`${projects.find(p => p.id === openProject).title} ${i + 1}`} />
-                            ))}
-                          </div>
+                          <>
+                            {((openProject === 'inout' && !inoutImagesLoaded) || (openProject === 'tapetum' && !tapetumImagesLoaded) || (openProject === 'mu' && !muImagesLoaded)) ? (
+                              <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                <video
+                                  autoPlay
+                                  loop
+                                  muted
+                                  playsInline
+                                  style={{ width: '75px', height: '75px' }}
+                                >
+                                  <source src="/charging_gif.mp4" type="video/mp4" />
+                                </video>
+                              </div>
+                            ) : (
+                              <div className="image-gallery">
+                                {projects.find(p => p.id === openProject).content.images.map((img, i) => (
+                                  <img key={i} src={img} alt={`${projects.find(p => p.id === openProject).title} ${i + 1}`} />
+                                ))}
+                              </div>
+                            )}
+                          </>
                         )}
                         
                         {projects.find(p => p.id === openProject).content.text3 && (
