@@ -393,7 +393,7 @@ const Home = () => {
       // Small delay to ensure dropdown is rendered
       setTimeout(() => {
         const dropdownTop = dropdownRef.current.getBoundingClientRect().top + window.pageYOffset;
-        const offset = 85; // Offset to leave space for project cards above
+        const offset = 87; // Offset to leave space for project cards above
         window.scrollTo({
           top: dropdownTop - offset,
           behavior: 'smooth'
