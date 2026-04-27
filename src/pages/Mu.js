@@ -46,11 +46,11 @@ const Mu = () => {
           
           <div style={{ display: 'flex', gap: '40px', margin: '30px 0', alignItems: 'flex-start', flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 500px', lineHeight: '1.8' }}>
-              <p style={{ marginBottom: '15px' }}>
-                <strong>CITA APA:</strong> La mort i la primavera (1986). Barcelona: Fundació Mercè Rodoreda, 1997. Robat a M. Rodoreda i a A. Balasch.
-              </p>
               <p style={{ marginBottom: '15px', fontStyle: 'italic' }}>
                 Només aquesta pena d'adormir-se i de despertar-se i de sentir-se la vida que no saps d'on et ve i que fugirà sense que sàpigues per què te la van donar i per què te la prenen. Té, això, això i això. I ara apa.
+              </p>
+              <p style={{ marginBottom: '15px' }}>
+                CITA APA: La mort i la primavera (1986). Barcelona: Fundació Mercè Rodoreda, 1997. Robat a M. Rodoreda i a A. Balasch.
               </p>
               
               <p style={{ marginBottom: '15px' }}>

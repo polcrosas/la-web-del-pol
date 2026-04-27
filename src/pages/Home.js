@@ -147,6 +147,7 @@ const Home = () => {
       image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat3.jpg',
       isExternal: false,
       content: {
+        text: '<p style="line-height: 1.8; margin-bottom: 20px">INOUT is a hostel in Vallvidrera, Barcelona—a non-profit social initiative where 90% of the workforce consists of neurodivergent individuals or people with functional diversity. This exhibition investigates the liminal spaces between inside and outside, figure and ground, reality and simulacrum, or individual and language, utilizing INOUT as both a documentary source and a formal reference. This research aims to showcase objects that are simultaneously documentary and self-referential; objects exploring the spaces where language and chance collide—simulacra of the "outside" that never fully emancipates itself, never truly becoming "outside" at all.</p><p style="line-height: 1.8; margin-bottom: 20px">In this sense, INOUT manifests these constant dualities. Rather than being divided by a fixed border, they are separated by an ever-shifting coastline—infinite yet malleable—where waves crashing against rocks perpetually construct and reconstruct the frontier.</p>',
         videos: ['https://www.youtube.com/embed/gRGq4XQya_A', 'https://www.youtube.com/embed/UeFHuBp10QM'],
         images: [
           'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/follar_pol/selected/fotos_expo_pol-2.jpg',
@@ -240,8 +241,8 @@ const Home = () => {
         ],
         text: `<div style="display: flex; gap: 40px; margin: 30px 0; align-items: flex-start; flex-wrap: wrap;">
   <div style="flex: 1 1 500px; line-height: 1.8;">
-    <p style="margin-bottom: 15px"><strong>CITA APA:</strong> La mort i la primavera (1986). Barcelona: Fundació Mercè Rodoreda, 1997. Robat a M. Rodoreda i a A. Balasch.</p>
     <p style="margin-bottom: 15px; font-style: italic;">Només aquesta pena d'adormir-se i de despertar-se i de sentir-se la vida que no saps d'on et ve i que fugirà sense que sàpigues per què te la van donar i per què te la prenen. Té, això, això i això. I ara apa.</p>
+    <p style="margin-bottom: 15px">CITA APA: La mort i la primavera (1986). Barcelona: Fundació Mercè Rodoreda, 1997. Robat a M. Rodoreda i a A. Balasch.</p>
     
     <p style="margin-bottom: 15px">In <em>The Gateless Barrier,</em> "無" is exemplified as the door to enlightenment. One of its koans:</p>
     <p style="margin-bottom: 15px">Monk asks: Does a dog have Buddha nature or not?<br />Teacher says: None (無).</p>

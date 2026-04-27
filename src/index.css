@@ -135,21 +135,9 @@ a:hover {
   overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
-  border-right: 1px solid #000;
-  border-bottom: 1px solid #000;
-}
-
-.entry-card:nth-child(-n + 3) {
-  border-top: 1px solid #000;
-}
-
-.entry-card:nth-child(3n + 1) {
-  border-left: 1px solid #000;
-}
-
-/* Fix left border for cards after dropdown - the dropdown disrupts nth-child counting */
-.project-dropdown ~ .entry-card:nth-child(3n + 2) {
-  border-left: 1px solid #000;
+  border: 1px solid #000;
+  margin-top: -1px;
+  margin-left: -1px;
 }
 
 .entry-card:hover {
@@ -193,13 +181,9 @@ a:hover {
   .entry-card {
     aspect-ratio: 1;
     overflow: hidden;
-    border-left: 1px solid #000;
-    border-right: 1px solid #000;
-    border-bottom: 1px solid #000;
-  }
-  
-  .entry-card:first-child {
-    border-top: 1px solid #000;
+    border: 1px solid #000;
+    margin-top: -1px;
+    margin-left: 0;
   }
   
   .entry-card img {
