@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { database } from '../firebase';
 import { ref, onValue, set, get } from 'firebase/database';
 
@@ -12,9 +12,9 @@ const MTG = () => {
   const [error, setError] = useState(null);
 
   // For hold-to-increment functionality
-  const [holdInterval, setHoldInterval] = useState(null);
-  const [holdTimeout, setHoldTimeout] = useState(null);
-  const [holdCount, setHoldCount] = useState(0);
+  const holdIntervalRef = useRef(null);
+  const holdTimeoutRef = useRef(null);
+  const showingVictoryDialogRef = useRef(false);
 
   const mtgRef = ref(database, 'mtg');
 
@@ -70,11 +70,16 @@ const MTG = () => {
     });
 
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Record a victory
   const recordVictory = async (winner) => {
     try {
+      // Reset life counters immediately to prevent multiple triggers
+      setPolLife(20);
+      setDomeLife(20);
+      
       const snapshot = await get(mtgRef);
       let data = snapshot.val() || {
         polTotal: 0,
@@ -153,17 +158,31 @@ const MTG = () => {
 
   // Check for 0 life and show confirm dialog
   const checkForVictory = (player, newLife) => {
-    if (newLife === 0) {
+    if (newLife === 0 && !showingVictoryDialogRef.current) {
+      showingVictoryDialogRef.current = true;
+      
+      // Stop any ongoing hold intervals immediately
+      if (holdTimeoutRef.current) {
+        clearTimeout(holdTimeoutRef.current);
+        holdTimeoutRef.current = null;
+      }
+      if (holdIntervalRef.current) {
+        clearInterval(holdIntervalRef.current);
+        holdIntervalRef.current = null;
+      }
+      
       const winner = player === 'pol' ? 'Dome' : 'Pol';
       const loser = player === 'pol' ? 'Pol' : 'Dome';
       
       setTimeout(() => {
         if (window.confirm(`${loser} reached 0 life. Record victory for ${winner}?`)) {
           recordVictory(winner);
-          // Reset life counters
+        } else {
+          // If cancelled, reset life counters anyway
           setPolLife(20);
           setDomeLife(20);
         }
+        showingVictoryDialogRef.current = false;
       }, 100); // Small delay to let the UI update
     }
   };
@@ -191,6 +210,12 @@ const MTG = () => {
     // Start holding after 300ms
     const timeout = setTimeout(() => {
       const interval = setInterval(() => {
+        // Stop if dialog is showing
+        if (showingVictoryDialogRef.current) {
+          clearInterval(interval);
+          return;
+        }
+        
         count++;
         
         // Determine increment based on hold duration
@@ -205,25 +230,41 @@ const MTG = () => {
         }
         
         if (player === 'pol') {
-          setPolLife(prev => direction === 'up' ? prev + currentIncrement : Math.max(0, prev - currentIncrement));
+          setPolLife(prev => {
+            if (prev === 0 || showingVictoryDialogRef.current) return prev;
+            const newLife = direction === 'up' ? prev + currentIncrement : Math.max(0, prev - currentIncrement);
+            if (newLife === 0) {
+              checkForVictory('pol', newLife);
+            }
+            return newLife;
+          });
         } else {
-          setDomeLife(prev => direction === 'up' ? prev + currentIncrement : Math.max(0, prev - currentIncrement));
+          setDomeLife(prev => {
+            if (prev === 0 || showingVictoryDialogRef.current) return prev;
+            const newLife = direction === 'up' ? prev + currentIncrement : Math.max(0, prev - currentIncrement);
+            if (newLife === 0) {
+              checkForVictory('dome', newLife);
+            }
+            return newLife;
+          });
         }
       }, 100); // Update every 100ms
       
-      setHoldInterval(interval);
+      holdIntervalRef.current = interval;
     }, 300);
     
-    setHoldTimeout(timeout);
-    setHoldCount(count);
+    holdTimeoutRef.current = timeout;
   };
   
   const handleMouseUp = () => {
-    if (holdTimeout) clearTimeout(holdTimeout);
-    if (holdInterval) clearInterval(holdInterval);
-    setHoldTimeout(null);
-    setHoldInterval(null);
-    setHoldCount(0);
+    if (holdTimeoutRef.current) {
+      clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = null;
+    }
+    if (holdIntervalRef.current) {
+      clearInterval(holdIntervalRef.current);
+      holdIntervalRef.current = null;
+    }
   };
 
   // Clear all data
@@ -378,41 +419,54 @@ const MTG = () => {
   }
 
   return (
-    <div style={{ 
-      padding: '20px',
-      maxWidth: '800px',
+    <div style={{
+      padding: '10px',
+      maxWidth: '600px',
       margin: '0 auto'
     }}>
+      {/* Header */}
       <div style={{
-        padding: '20px',
         border: '1px solid #000',
-        marginBottom: '0',
-        textAlign: 'center'
+        padding: '10px',
+        marginBottom: '10px',
+        textAlign: 'center',
+        background: '#fff'
       }}>
-        <h1 style={{ fontSize: '16px', fontWeight: 'normal', marginBottom: '5px' }}>
+        <h1 style={{
+          fontSize: '14px',
+          fontWeight: 'normal',
+          margin: '0 0 3px 0',
+          textTransform: 'lowercase'
+        }}>
           mtg victory tracker
         </h1>
-        <p style={{ fontSize: '14px', color: '#666' }}>pol vs dome</p>
+        <p style={{
+          fontSize: '11px',
+          color: '#666',
+          margin: 0,
+          textTransform: 'lowercase'
+        }}>
+          pol vs dome
+        </p>
       </div>
 
       <div style={{
         border: '1px solid #000',
-        borderTop: 'none',
-        padding: '30px',
+        padding: '15px',
         background: '#fff'
       }}>
         {/* Global Stats */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: '20px',
-          marginBottom: '30px'
+          gap: '10px',
+          marginBottom: '15px'
         }}>
           <div
             onClick={() => recordVictory('Pol')}
             style={{
               border: '1px solid #000',
-              padding: '20px',
+              padding: '15px 10px',
               textAlign: 'center',
               cursor: 'pointer',
               transition: 'all 0.2s ease'
@@ -426,17 +480,17 @@ const MTG = () => {
               e.currentTarget.style.color = '#000';
             }}
           >
-            <h2 style={{ fontSize: '14px', fontWeight: 'normal', marginBottom: '10px' }}>pol</h2>
-            <div style={{ fontSize: '36px', fontWeight: 'normal', margin: '10px 0' }}>
+            <h2 style={{ fontSize: '12px', fontWeight: 'normal', marginBottom: '8px' }}>pol</h2>
+            <div style={{ fontSize: '32px', fontWeight: 'normal', margin: '5px 0' }}>
               {polTotal}
             </div>
-            <p style={{ fontSize: '14px' }}>total victories</p>
+            <p style={{ fontSize: '11px', color: '#666' }}>victories</p>
           </div>
           <div
             onClick={() => recordVictory('Dome')}
             style={{
               border: '1px solid #000',
-              padding: '20px',
+              padding: '15px 10px',
               textAlign: 'center',
               cursor: 'pointer',
               transition: 'all 0.2s ease'
@@ -450,38 +504,37 @@ const MTG = () => {
               e.currentTarget.style.color = '#000';
             }}
           >
-            <h2 style={{ fontSize: '14px', fontWeight: 'normal', marginBottom: '10px' }}>dome</h2>
-            <div style={{ fontSize: '36px', fontWeight: 'normal', margin: '10px 0' }}>
+            <h2 style={{ fontSize: '12px', fontWeight: 'normal', marginBottom: '8px' }}>dome</h2>
+            <div style={{ fontSize: '32px', fontWeight: 'normal', margin: '5px 0' }}>
               {domeTotal}
             </div>
-            <p style={{ fontSize: '14px' }}>total victories</p>
+            <p style={{ fontSize: '11px', color: '#666' }}>victories</p>
           </div>
         </div>
 
         {/* Life Counter */}
         <div style={{
           border: '1px solid #000',
-          padding: '20px',
-          marginBottom: '20px'
+          padding: '15px 10px',
+          marginBottom: '15px'
         }}>
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: '20px'
+            gap: '10px'
           }}>
             {/* Pol Life */}
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '12px', marginBottom: '10px', color: '#666' }}>pol</p>
+              <p style={{ fontSize: '11px', marginBottom: '5px', color: '#666' }}>pol</p>
               <div style={{
-                fontSize: '48px',
+                fontSize: '36px',
                 fontWeight: 'normal',
-                marginBottom: '10px',
-                color: polLife === 0 ? '#ff0000' : '#000',
-                transition: 'color 0.3s ease'
+                marginBottom: '8px',
+                color: '#000'
               }}>
                 {polLife}
               </div>
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                 <button
                   onMouseDown={() => handleMouseDown('pol', 'down')}
                   onMouseUp={handleMouseUp}
@@ -489,14 +542,14 @@ const MTG = () => {
                   onTouchStart={() => handleMouseDown('pol', 'down')}
                   onTouchEnd={handleMouseUp}
                   style={{
-                    padding: '10px 20px',
+                    padding: '8px 16px',
                     border: '1px solid #000',
                     background: '#fff',
                     cursor: 'pointer',
-                    fontSize: '18px',
+                    fontSize: '16px',
                     fontWeight: 'normal',
                     fontFamily: 'inherit',
-                    minWidth: '50px'
+                    minWidth: '45px'
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.background = '#000';
@@ -512,14 +565,14 @@ const MTG = () => {
                   onTouchStart={() => handleMouseDown('pol', 'up')}
                   onTouchEnd={handleMouseUp}
                   style={{
-                    padding: '10px 20px',
+                    padding: '8px 16px',
                     border: '1px solid #000',
                     background: '#fff',
                     cursor: 'pointer',
-                    fontSize: '18px',
+                    fontSize: '16px',
                     fontWeight: 'normal',
                     fontFamily: 'inherit',
-                    minWidth: '50px'
+                    minWidth: '45px'
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.background = '#000';
@@ -533,17 +586,16 @@ const MTG = () => {
 
             {/* Dome Life */}
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '12px', marginBottom: '10px', color: '#666' }}>dome</p>
+              <p style={{ fontSize: '11px', marginBottom: '5px', color: '#666' }}>dome</p>
               <div style={{
-                fontSize: '48px',
+                fontSize: '36px',
                 fontWeight: 'normal',
-                marginBottom: '10px',
-                color: domeLife === 0 ? '#ff0000' : '#000',
-                transition: 'color 0.3s ease'
+                marginBottom: '8px',
+                color: '#000'
               }}>
                 {domeLife}
               </div>
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                 <button
                   onMouseDown={() => handleMouseDown('dome', 'down')}
                   onMouseUp={handleMouseUp}
@@ -551,14 +603,14 @@ const MTG = () => {
                   onTouchStart={() => handleMouseDown('dome', 'down')}
                   onTouchEnd={handleMouseUp}
                   style={{
-                    padding: '10px 20px',
+                    padding: '8px 16px',
                     border: '1px solid #000',
                     background: '#fff',
                     cursor: 'pointer',
-                    fontSize: '18px',
+                    fontSize: '16px',
                     fontWeight: 'normal',
                     fontFamily: 'inherit',
-                    minWidth: '50px'
+                    minWidth: '45px'
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.background = '#000';
@@ -574,14 +626,14 @@ const MTG = () => {
                   onTouchStart={() => handleMouseDown('dome', 'up')}
                   onTouchEnd={handleMouseUp}
                   style={{
-                    padding: '10px 20px',
+                    padding: '8px 16px',
                     border: '1px solid #000',
                     background: '#fff',
                     cursor: 'pointer',
-                    fontSize: '18px',
+                    fontSize: '16px',
                     fontWeight: 'normal',
                     fontFamily: 'inherit',
-                    minWidth: '50px'
+                    minWidth: '45px'
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.background = '#000';
@@ -595,7 +647,7 @@ const MTG = () => {
           </div>
           
           {/* Reset Life Button */}
-          <div style={{ textAlign: 'center', marginTop: '15px' }}>
+          <div style={{ textAlign: 'center', marginTop: '10px' }}>
             <button
               onClick={() => {
                 setPolLife(20);
@@ -630,36 +682,29 @@ const MTG = () => {
         {/* Session Info */}
         <div style={{
           border: '1px solid #000',
-          padding: '20px',
-          marginBottom: '20px',
+          padding: '12px 10px',
+          marginBottom: '15px',
           background: 'rgba(0, 0, 0, 0.02)'
         }}>
-          <h3 style={{
-            fontSize: '14px',
-            fontWeight: 'normal',
-            marginBottom: '10px'
-          }}>
-            session status
-          </h3>
-          <p style={{ fontSize: '14px', lineHeight: '1.6', marginBottom: '8px' }}>
-            last game: {sessionInfo.lastWinner}
+          <p style={{ fontSize: '12px', lineHeight: '1.5', marginBottom: '5px' }}>
+            {sessionInfo.lastWinner}
           </p>
           {sessionInfo.nextStarter && (
-            <p style={{ fontSize: '14px', lineHeight: '1.6', marginBottom: '8px' }}>
-              next starter: {sessionInfo.nextStarter}
+            <p style={{ fontSize: '12px', lineHeight: '1.5', marginBottom: '5px' }}>
+              next: {sessionInfo.nextStarter}
             </p>
           )}
           {sessionInfo.todayLeader && (
-            <p style={{ fontSize: '14px', lineHeight: '1.6', marginBottom: '8px' }}>
-              today's leader: {sessionInfo.todayLeader}
+            <p style={{ fontSize: '12px', lineHeight: '1.5', marginBottom: '5px' }}>
+              leader: {sessionInfo.todayLeader}
             </p>
           )}
           {sessionInfo.specialMessage && (
-            <p style={{ 
-              fontSize: '14px', 
-              lineHeight: '1.6', 
-              marginTop: '15px',
-              padding: '10px',
+            <p style={{
+              fontSize: '12px',
+              lineHeight: '1.5',
+              marginTop: '8px',
+              padding: '8px',
               background: '#fff',
               border: '1px solid #000',
               textAlign: 'center'
@@ -673,15 +718,17 @@ const MTG = () => {
         {/* Today's Game Log */}
         <div style={{
           border: '1px solid #000',
-          padding: '20px',
-          maxHeight: '400px',
+          padding: '12px 10px',
+          marginTop: '10px',
+          maxHeight: '300px',
           overflowY: 'auto',
           background: '#fff'
         }}>
           <h3 style={{
-            fontSize: '14px',
+            fontSize: '12px',
             fontWeight: 'normal',
-            marginBottom: '15px'
+            marginBottom: '8px',
+            textTransform: 'lowercase'
           }}>
             today's games
           </h3>
@@ -689,10 +736,11 @@ const MTG = () => {
             <div style={{
               textAlign: 'center',
               color: '#666',
-              fontStyle: 'italic',
-              padding: '20px'
+              padding: '10px',
+              fontSize: '11px',
+              textTransform: 'lowercase'
             }}>
-              no games recorded today
+              no games today
             </div>
           ) : (
             <div>
@@ -700,19 +748,19 @@ const MTG = () => {
                 <div
                   key={index}
                   style={{
-                    padding: '10px',
+                    padding: '6px 8px',
                     borderBottom: index === todayGames.length - 1 ? 'none' : '1px solid #eee',
-                    fontSize: '14px',
+                    fontSize: '11px',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center'
                   }}
                 >
-                  <span>
+                  <span style={{ textTransform: 'lowercase' }}>
                     {game.winner.toLowerCase()} won
-                    {index === 0 ? ' (most recent)' : ''}
+                    {index === 0 ? ' (recent)' : ''}
                   </span>
-                  <span style={{ color: '#666', fontSize: '12px' }}>{game.time}</span>
+                  <span style={{ color: '#666', fontSize: '10px' }}>{game.time}</span>
                 </div>
               ))}
             </div>
@@ -721,34 +769,36 @@ const MTG = () => {
 
         {/* Danger Zone */}
         <div style={{
-          marginTop: '30px',
-          paddingTop: '30px',
+          marginTop: '10px',
+          paddingTop: '10px',
           borderTop: '1px solid #000'
         }}>
           <h3 style={{
-            fontSize: '14px',
+            fontSize: '12px',
             fontWeight: 'normal',
-            marginBottom: '15px',
-            color: '#666'
+            marginBottom: '8px',
+            color: '#666',
+            textTransform: 'lowercase'
           }}>
             danger zone
           </h3>
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: '15px'
+            gap: '8px'
           }}>
             <button
               onClick={undoLastGame}
               style={{
-                padding: '15px 20px',
+                padding: '10px 12px',
                 border: '1px solid #999',
                 background: '#fff',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '11px',
                 fontWeight: 'normal',
                 color: '#666',
-                fontFamily: 'inherit'
+                fontFamily: 'inherit',
+                textTransform: 'lowercase'
               }}
               onMouseEnter={(e) => {
                 e.target.style.background = '#666';
@@ -766,14 +816,15 @@ const MTG = () => {
             <button
               onClick={clearAll}
               style={{
-                padding: '15px 20px',
+                padding: '10px 12px',
                 border: '1px solid #999',
                 background: '#fff',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '11px',
                 fontWeight: 'normal',
                 color: '#666',
-                fontFamily: 'inherit'
+                fontFamily: 'inherit',
+                textTransform: 'lowercase'
               }}
               onMouseEnter={(e) => {
                 e.target.style.background = '#666';
