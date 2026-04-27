@@ -151,6 +151,23 @@ const MTG = () => {
     }
   };
 
+  // Check for 0 life and show confirm dialog
+  const checkForVictory = (player, newLife) => {
+    if (newLife === 0) {
+      const winner = player === 'pol' ? 'Dome' : 'Pol';
+      const loser = player === 'pol' ? 'Pol' : 'Dome';
+      
+      setTimeout(() => {
+        if (window.confirm(`${loser} reached 0 life. Record victory for ${winner}?`)) {
+          recordVictory(winner);
+          // Reset life counters
+          setPolLife(20);
+          setDomeLife(20);
+        }
+      }, 100); // Small delay to let the UI update
+    }
+  };
+
   // Hold-to-increment functionality
   const handleMouseDown = (player, direction) => {
     let count = 0;
@@ -158,9 +175,17 @@ const MTG = () => {
     
     // Initial click
     if (player === 'pol') {
-      setPolLife(prev => direction === 'up' ? prev + 1 : Math.max(0, prev - 1));
+      setPolLife(prev => {
+        const newLife = direction === 'up' ? prev + 1 : Math.max(0, prev - 1);
+        checkForVictory('pol', newLife);
+        return newLife;
+      });
     } else {
-      setDomeLife(prev => direction === 'up' ? prev + 1 : Math.max(0, prev - 1));
+      setDomeLife(prev => {
+        const newLife = direction === 'up' ? prev + 1 : Math.max(0, prev - 1);
+        checkForVictory('dome', newLife);
+        return newLife;
+      });
     }
     
     // Start holding after 300ms
@@ -450,7 +475,9 @@ const MTG = () => {
               <div style={{
                 fontSize: '48px',
                 fontWeight: 'normal',
-                marginBottom: '10px'
+                marginBottom: '10px',
+                color: polLife === 0 ? '#ff0000' : '#000',
+                transition: 'color 0.3s ease'
               }}>
                 {polLife}
               </div>
@@ -510,7 +537,9 @@ const MTG = () => {
               <div style={{
                 fontSize: '48px',
                 fontWeight: 'normal',
-                marginBottom: '10px'
+                marginBottom: '10px',
+                color: domeLife === 0 ? '#ff0000' : '#000',
+                transition: 'color 0.3s ease'
               }}>
                 {domeLife}
               </div>
