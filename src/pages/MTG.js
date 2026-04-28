@@ -1281,12 +1281,10 @@ const MTG = () => {
                     {polTotal}
                   </div>
                   <p style={{ fontSize: '11px', color: '#666', marginBottom: '6px', textTransform: 'lowercase' }}>total games</p>
-                  {(polBo3 > 0 || domeBo3 > 0 || polBo5 > 0 || domeBo5 > 0) && (
-                    <div style={{ fontSize: '10px', color: '#999', lineHeight: '1.4' }}>
-                      {(polBo3 > 0 || domeBo3 > 0) && <div>bo3: {polBo3}</div>}
-                      {(polBo5 > 0 || domeBo5 > 0) && <div>bo5: {polBo5}</div>}
-                    </div>
-                  )}
+                  <div style={{ fontSize: '10px', color: '#999', lineHeight: '1.4' }}>
+                    {seriesMode === 'bo3' && (polBo3 > 0 || domeBo3 > 0) && <div>bo3: {polBo3}</div>}
+                    {seriesMode === 'bo5' && (polBo5 > 0 || domeBo5 > 0) && <div>bo5: {polBo5}</div>}
+                  </div>
                 </div>
                 <div
                   onClick={() => recordVictory('Dome')}
@@ -1303,12 +1301,10 @@ const MTG = () => {
                     {domeTotal}
                   </div>
                   <p style={{ fontSize: '11px', color: '#666', marginBottom: '6px', textTransform: 'lowercase' }}>total games</p>
-                  {(polBo3 > 0 || domeBo3 > 0 || polBo5 > 0 || domeBo5 > 0) && (
-                    <div style={{ fontSize: '10px', color: '#999', lineHeight: '1.4' }}>
-                      {(polBo3 > 0 || domeBo3 > 0) && <div>bo3: {domeBo3}</div>}
-                      {(polBo5 > 0 || domeBo5 > 0) && <div>bo5: {domeBo5}</div>}
-                    </div>
-                  )}
+                  <div style={{ fontSize: '10px', color: '#999', lineHeight: '1.4' }}>
+                    {seriesMode === 'bo3' && (polBo3 > 0 || domeBo3 > 0) && <div>bo3: {domeBo3}</div>}
+                    {seriesMode === 'bo5' && (polBo5 > 0 || domeBo5 > 0) && <div>bo5: {domeBo5}</div>}
+                  </div>
                 </div>
               </div>
 
