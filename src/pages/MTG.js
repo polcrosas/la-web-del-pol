@@ -332,31 +332,141 @@ const MTG = () => {
       todayLeader = `tied (${polWins}-${domeWins})`;
     }
 
-    // Check for win streak (3+ consecutive wins)
+    // Check for various game situations
     let specialMessage = null;
     let streakCount = 0;
+    let previousWinner = null;
     
     // Count consecutive wins from the end
     for (let i = todayGames.length - 1; i >= 0; i--) {
       if (todayGames[i].winner === lastGame.winner) {
         streakCount++;
       } else {
+        previousWinner = todayGames[i].winner;
         break;
       }
     }
     
-    if (streakCount >= 3) {
-      specialMessage = `${lastGame.winner.toLowerCase()} is on fire! ＼(＾O＾)／ ${streakCount} win streak!`;
+    const winDiff = Math.abs(polWins - domeWins);
+    const totalGames = todayGames.length;
+    const loser = lastGame.winner === 'Pol' ? 'dome' : 'pol';
+    
+    // Check if someone just broke a streak (previous player had 3+ wins)
+    let previousStreakCount = 0;
+    if (previousWinner && totalGames >= 4) {
+      for (let i = todayGames.length - 2; i >= 0; i--) {
+        if (todayGames[i].winner === previousWinner) {
+          previousStreakCount++;
+        } else {
+          break;
+        }
+      }
     }
-
-    // Check for match point in best of 5 (2-2 tied)
-    if (polWins === 2 && domeWins === 2) {
-      specialMessage = `match point! (╯°□°）╯ 2-2 - winner takes all!`;
+    
+    // Priority 1: Streak breaker (broke a 3+ streak)
+    if (previousStreakCount >= 3 && streakCount === 1) {
+      const messages = [
+        `${lastGame.winner.toLowerCase()} breaks the streak! (ง'̀-'́)ง ended ${previousStreakCount} wins!`,
+        `streak broken! ᕙ(⇀‸↼‶)ᕗ ${lastGame.winner.toLowerCase()} stops ${previousWinner.toLowerCase()}!`,
+        `${previousWinner.toLowerCase()}'s ${previousStreakCount} streak ended! (╯°□°)╯ ${lastGame.winner.toLowerCase()} fights back!`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
     }
-
-    // If no special message, give GL to the loser (who starts next)
-    if (!specialMessage && todayGames.length > 0) {
-      specialMessage = `good luck ${nextStarter}! (•̀ᴗ•́)و`;
+    // Priority 2: Best of 5 winner (3-2)
+    else if ((polWins === 3 && domeWins === 2) || (domeWins === 3 && polWins === 2)) {
+      const winner = polWins === 3 ? 'pol' : 'dome';
+      const messages = [
+        `${winner} takes it! ᕙ(⇀‸↼‶)ᕗ best of 5 complete (3-2)`,
+        `${winner} wins the series! (ง'̀-'́)ง 3-2 victory!`,
+        `close one! ${winner} prevails ᕕ( ᐛ )ᕗ 3-2`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    // Priority 3: Best of 3 winner (2-1)
+    else if ((polWins === 2 && domeWins === 1) || (domeWins === 2 && polWins === 1)) {
+      const winner = polWins === 2 ? 'pol' : 'dome';
+      const messages = [
+        `${winner} wins! (•̀ᴗ•́)و best of 3 complete (2-1)`,
+        `${winner} takes the series! ᕙ(⇀‸↼‶)ᕗ 2-1`,
+        `${winner} clinches it! (ง'̀-'́)ง 2-1 victory`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    // Priority 4: Match point (2-2)
+    else if (polWins === 2 && domeWins === 2) {
+      specialMessage = `match point! (╯°□°)╯ 2-2 - winner takes all!`;
+    }
+    // Priority 5: Best of 3 match point (1-1)
+    else if (polWins === 1 && domeWins === 1 && totalGames === 2) {
+      specialMessage = `rubber match! (ง'̀-'́)ง 1-1 - next wins best of 3!`;
+    }
+    // Priority 6: Long win streaks (5+)
+    else if (streakCount >= 5) {
+      const messages = [
+        `${lastGame.winner.toLowerCase()} is unstoppable! ᕙ(⇀‸↼‶)ᕗ ${streakCount} wins!`,
+        `${lastGame.winner.toLowerCase()} dominating! ୧(＾ 〰 ＾)୨ ${streakCount} streak!`,
+        `${loser} can't catch a break... (╥﹏╥) ${streakCount} losses`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    // Priority 7: Medium win streaks (3-4)
+    else if (streakCount >= 3) {
+      const messages = [
+        `${lastGame.winner.toLowerCase()} is on fire! ＼(＾O＾)／ ${streakCount} wins!`,
+        `${lastGame.winner.toLowerCase()} heating up! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ ${streakCount} streak!`,
+        `${loser} needs a comeback! (｡•́︿•̀｡) ${streakCount} down`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    // Priority 8: Big lead (3+ games ahead)
+    else if (winDiff >= 3 && totalGames >= 4) {
+      const leader = polWins > domeWins ? 'pol' : 'dome';
+      const messages = [
+        `${leader} crushing it! (ง'̀-'́)ง ${polWins > domeWins ? polWins : domeWins}-${polWins > domeWins ? domeWins : polWins}`,
+        `${loser} in trouble... (⊙_⊙;) down by ${winDiff}`,
+        `${leader} running away! ᕕ( ᐛ )ᕗ ${polWins > domeWins ? polWins : domeWins}-${polWins > domeWins ? domeWins : polWins}`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    // Priority 9: Close game (tied or 1 game difference)
+    else if (winDiff <= 1 && totalGames >= 3) {
+      const messages = [
+        `neck and neck! (ง •̀_•́)ง ${polWins}-${domeWins}`,
+        `so close! ᕙ(⇀‸↼‶)ᕗ ${polWins}-${domeWins}`,
+        `anyone's game! (•̀ᴗ•́)و ${polWins}-${domeWins}`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    // Priority 10: First game of the day
+    else if (totalGames === 1) {
+      const messages = [
+        `first blood! (•̀ᴗ•́)و ${lastGame.winner.toLowerCase()} takes game 1`,
+        `${lastGame.winner.toLowerCase()} strikes first! (ง'̀-'́)ง 1-0`,
+        `game on! (ง •̀_•́)ง ${lastGame.winner.toLowerCase()} leads`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    // Priority 11: Comeback win (was losing, now tied or ahead)
+    else if (totalGames >= 2) {
+      const previousPolWins = todayGames.slice(0, -1).filter(g => g.winner === 'Pol').length;
+      const previousDomeWins = todayGames.slice(0, -1).filter(g => g.winner === 'Dome').length;
+      
+      if (lastGame.winner === 'Pol' && previousPolWins < previousDomeWins && polWins >= domeWins) {
+        specialMessage = `pol fights back! ᕦ(ò_óˇ)ᕤ comeback complete!`;
+      } else if (lastGame.winner === 'Dome' && previousDomeWins < previousPolWins && domeWins >= polWins) {
+        specialMessage = `dome fights back! ᕦ(ò_óˇ)ᕤ comeback complete!`;
+      }
+    }
+    
+    // Default: Good luck message
+    if (!specialMessage) {
+      const messages = [
+        `good luck ${nextStarter}! (•̀ᴗ•́)و`,
+        `your turn ${nextStarter}! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧`,
+        `${nextStarter} starts! ᕙ(⇀‸↼‶)ᕗ`,
+        `let's go ${nextStarter}! (ง'̀-'́)ง`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
     }
 
     return {
@@ -538,7 +648,11 @@ const MTG = () => {
                 <button
                   onMouseDown={() => handleMouseDown('pol', 'down')}
                   onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
+                  onMouseLeave={(e) => {
+                    handleMouseUp();
+                    e.target.style.background = '#fff';
+                    e.target.style.color = '#000';
+                  }}
                   onTouchStart={() => handleMouseDown('pol', 'down')}
                   onTouchEnd={handleMouseUp}
                   style={{
@@ -561,7 +675,11 @@ const MTG = () => {
                 <button
                   onMouseDown={() => handleMouseDown('pol', 'up')}
                   onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
+                  onMouseLeave={(e) => {
+                    handleMouseUp();
+                    e.target.style.background = '#fff';
+                    e.target.style.color = '#000';
+                  }}
                   onTouchStart={() => handleMouseDown('pol', 'up')}
                   onTouchEnd={handleMouseUp}
                   style={{
@@ -599,7 +717,11 @@ const MTG = () => {
                 <button
                   onMouseDown={() => handleMouseDown('dome', 'down')}
                   onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
+                  onMouseLeave={(e) => {
+                    handleMouseUp();
+                    e.target.style.background = '#fff';
+                    e.target.style.color = '#000';
+                  }}
                   onTouchStart={() => handleMouseDown('dome', 'down')}
                   onTouchEnd={handleMouseUp}
                   style={{
@@ -622,7 +744,11 @@ const MTG = () => {
                 <button
                   onMouseDown={() => handleMouseDown('dome', 'up')}
                   onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
+                  onMouseLeave={(e) => {
+                    handleMouseUp();
+                    e.target.style.background = '#fff';
+                    e.target.style.color = '#000';
+                  }}
                   onTouchStart={() => handleMouseDown('dome', 'up')}
                   onTouchEnd={handleMouseUp}
                   style={{
