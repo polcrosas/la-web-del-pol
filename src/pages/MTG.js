@@ -44,6 +44,27 @@ const MTG = () => {
   };
 
   useEffect(() => {
+    // Change manifest for iOS "Add to Home Screen"
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    const originalHref = manifestLink?.getAttribute('href');
+    
+    if (manifestLink) {
+      manifestLink.setAttribute('href', '/manifest-mtg.json');
+    }
+    
+    // Change apple-mobile-web-app-title for iOS
+    let appleTitleMeta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+    const originalAppleTitle = appleTitleMeta?.getAttribute('content');
+    
+    if (appleTitleMeta) {
+      appleTitleMeta.setAttribute('content', 'MTG Tracker');
+    } else {
+      appleTitleMeta = document.createElement('meta');
+      appleTitleMeta.setAttribute('name', 'apple-mobile-web-app-title');
+      appleTitleMeta.setAttribute('content', 'MTG Tracker');
+      document.head.appendChild(appleTitleMeta);
+    }
+    
     const unsubscribe = onValue(mtgRef, (snapshot) => {
       try {
         let data = snapshot.val();
@@ -87,7 +108,16 @@ const MTG = () => {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      // Restore original manifest when leaving the page
+      if (manifestLink && originalHref) {
+        manifestLink.setAttribute('href', originalHref);
+      }
+      if (appleTitleMeta && originalAppleTitle) {
+        appleTitleMeta.setAttribute('content', originalAppleTitle);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -357,7 +387,7 @@ const MTG = () => {
       }, 100);
       
       holdIntervalRef.current = interval;
-    }, 300);
+    }, 500);
     
     holdTimeoutRef.current = timeout;
   };
@@ -700,7 +730,7 @@ const MTG = () => {
             top: 20px !important;
             font-size: 16px !important;
             font-weight: bold !important;
-            text-transform: uppercase !important;
+            text-transform: lowercase !important;
             color: #000 !important;
             user-select: none !important;
             opacity: 0.4 !important;
@@ -726,7 +756,7 @@ const MTG = () => {
             touch-action: manipulation !important;
             user-select: none !important;
             -webkit-tap-highlight-color: transparent !important;
-            border-radius: 8px !important;
+            border-radius: 0 !important;
             transition: all 0.1s ease !important;
           }
 
@@ -748,7 +778,7 @@ const MTG = () => {
             font-size: 22px !important;
             font-weight: bold !important;
             cursor: pointer !important;
-            border-radius: 50% !important;
+            border-radius: 0 !important;
             backdrop-filter: blur(10px) !important;
             z-index: 100 !important;
             display: flex !important;
@@ -771,7 +801,7 @@ const MTG = () => {
             transform: translate(-50%, -50%) !important;
             background: rgba(255, 255, 255, 0.98) !important;
             border: 3px solid #000 !important;
-            border-radius: 16px !important;
+            border-radius: 0 !important;
             padding: 20px !important;
             backdrop-filter: blur(10px) !important;
             z-index: 101 !important;
@@ -788,7 +818,7 @@ const MTG = () => {
             font-size: 14px !important;
             font-weight: normal !important;
             cursor: pointer !important;
-            border-radius: 8px !important;
+            border-radius: 0 !important;
             text-transform: lowercase !important;
             transition: all 0.2s ease !important;
           }
@@ -820,18 +850,18 @@ const MTG = () => {
             transform: translate(-50%, -50%) !important;
             background: #fff !important;
             color: #000 !important;
-            font-size: 80px !important;
+            font-size: 40px !important;
             font-weight: bold !important;
-            width: 140px !important;
-            height: 140px !important;
-            border-radius: 12px !important;
+            width: 70px !important;
+            height: 70px !important;
+            border-radius: 0 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             z-index: 200 !important;
             animation: diceAppear 0.2s ease !important;
-            border: 3px solid #000 !important;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+            border: 2px solid #000 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
           }
 
           @keyframes diceAppear {
@@ -857,7 +887,7 @@ const MTG = () => {
             font-size: 11px !important;
             font-weight: normal !important;
             text-transform: lowercase !important;
-            border-radius: 8px !important;
+            border-radius: 0 !important;
             z-index: 150 !important;
             animation: bannerSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;

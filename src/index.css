@@ -98,6 +98,7 @@ a:hover {
   padding: 20px;
   border: 1px solid #000;
   margin-bottom: 0;
+  margin-left: -1px;
 }
 
 .header h1 {
@@ -454,7 +455,7 @@ a:hover {
   grid-column: 1 / -1;
   border: 1px solid #000;
   border-top: none;
-  border-left: 1px solid #000;
+  margin-left: -1px;
   padding: 40px;
   background: #fff;
   position: relative;
