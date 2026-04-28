@@ -26,6 +26,7 @@ const MTG = () => {
   const showingVictoryDialogRef = useRef(false);
   const previousPolLifeRef = useRef(20);
   const previousDomeLifeRef = useRef(20);
+  const hasChangedLifeRef = useRef(false);
 
   const mtgRef = ref(database, 'mtg');
 
@@ -49,6 +50,20 @@ const MTG = () => {
     
     // Update document title
     document.title = 'MTG Tracker';
+    
+    // Update manifest for PWA installation
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    const originalManifest = manifestLink ? manifestLink.href : null;
+    if (manifestLink) {
+      manifestLink.href = '/manifest-mtg.json';
+    }
+    
+    // Update apple-mobile-web-app-title for iOS
+    let appleTitleMeta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+    const originalAppleTitle = appleTitleMeta ? appleTitleMeta.content : null;
+    if (appleTitleMeta) {
+      appleTitleMeta.content = 'MTG Tracker';
+    }
     
     const unsubscribe = onValue(mtgRef, (snapshot) => {
       try {
@@ -96,6 +111,18 @@ const MTG = () => {
     return () => {
       unsubscribe();
       document.title = 'pol crosas';
+      
+      // Restore original manifest
+      const manifestLink = document.querySelector('link[rel="manifest"]');
+      if (manifestLink && originalManifest) {
+        manifestLink.href = originalManifest;
+      }
+      
+      // Restore original apple title
+      let appleTitleMeta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+      if (appleTitleMeta && originalAppleTitle) {
+        appleTitleMeta.content = originalAppleTitle;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -203,11 +230,7 @@ const MTG = () => {
         if (currentMode === 'bo3' && (currentScore.pol === 2 || currentScore.dome === 2)) {
           seriesComplete = true;
           seriesWinner = currentScore.pol === 2 ? 'Pol' : 'Dome';
-          if (seriesWinner === 'Pol') {
-            data.polBo3 = (data.polBo3 || 0) + 1;
-          } else {
-            data.domeBo3 = (data.domeBo3 || 0) + 1;
-          }
+          // Don't increment BO3 counter yet - wait to see if they extend to BO5
         } else if (currentMode === 'bo5' && (currentScore.pol === 3 || currentScore.dome === 3)) {
           seriesComplete = true;
           seriesWinner = currentScore.pol === 3 ? 'Pol' : 'Dome';
@@ -230,7 +253,7 @@ const MTG = () => {
               );
               
               if (extendToBo5) {
-                // Continue the series as bo5
+                // Continue the series as bo5 - DON'T record BO3 win
                 get(mtgRef).then(snapshot => {
                   let updatedData = snapshot.val();
                   updatedData.seriesMode = 'bo5';
@@ -238,9 +261,16 @@ const MTG = () => {
                   set(mtgRef, updatedData);
                 });
               } else {
-                // Reset to casual
+                // Cancel expansion - NOW record the BO3 win
                 get(mtgRef).then(snapshot => {
                   let updatedData = snapshot.val();
+                  // Record BO3 win
+                  if (seriesWinner === 'Pol') {
+                    updatedData.polBo3 = (updatedData.polBo3 || 0) + 1;
+                  } else {
+                    updatedData.domeBo3 = (updatedData.domeBo3 || 0) + 1;
+                  }
+                  // Reset to casual
                   updatedData.seriesMode = 'casual';
                   updatedData.currentSeriesScore = { pol: 0, dome: 0 };
                   set(mtgRef, updatedData);
@@ -316,6 +346,12 @@ const MTG = () => {
   };
 
   const handleMouseDown = (player, direction) => {
+    // Prevent duplicate triggers
+    if (hasChangedLifeRef.current) {
+      return;
+    }
+    
+    hasChangedLifeRef.current = true;
     let count = 0;
     let currentIncrement = 1;
     
@@ -372,6 +408,9 @@ const MTG = () => {
   };
   
   const handleMouseUp = () => {
+    // Reset the flag when releasing
+    hasChangedLifeRef.current = false;
+    
     if (holdTimeoutRef.current) {
       clearTimeout(holdTimeoutRef.current);
       holdTimeoutRef.current = null;
