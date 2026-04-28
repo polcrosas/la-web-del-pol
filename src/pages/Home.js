@@ -651,6 +651,9 @@ const Home = () => {
           muted
           playsInline
           className="loading-video"
+          controls={false}
+          preload="auto"
+          onLoadedData={(e) => e.target.play().catch(() => {})}
         >
           <source src="/charging_gif.mp4" type="video/mp4" />
         </video>

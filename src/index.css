@@ -26,6 +26,27 @@
   object-fit: contain;
 }
 
+/* Hide video controls completely */
+.loading-video::-webkit-media-controls {
+  display: none !important;
+}
+
+.loading-video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
+.loading-video::-webkit-media-controls-panel {
+  display: none !important;
+}
+
+.loading-video::-webkit-media-controls-play-button {
+  display: none !important;
+}
+
+.loading-video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+}
+
 @media (max-width: 768px) {
   .loading-video {
     max-width: 60px;
