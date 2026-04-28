@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const tarotImages = [
   'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/dogs/dogs_0.png',
@@ -25,6 +26,7 @@ const tarotImages = [
 ];
 
 const Home = () => {
+  const navigate = useNavigate();
   const [bioOpen, setBioOpen] = useState(false);
   const [openProject, setOpenProject] = useState(null);
   const [tarotQuestion, setTarotQuestion] = useState('');
@@ -38,6 +40,18 @@ const Home = () => {
   const [tapetumImagesLoaded, setTapetumImagesLoaded] = useState(false);
   const [muImagesLoaded, setMuImagesLoaded] = useState(false);
   const dropdownRef = useRef(null);
+  
+  // Check for preferred start page (for iOS PWA)
+  useEffect(() => {
+    const preferredPage = localStorage.getItem('preferredStartPage');
+    // Only redirect if coming from standalone mode (PWA) and on home page
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                         window.navigator.standalone === true;
+    
+    if (isStandalone && preferredPage === '/mtg') {
+      navigate('/mtg');
+    }
+  }, [navigate]);
   
   // Preload all project images
   useEffect(() => {

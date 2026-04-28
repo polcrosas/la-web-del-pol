@@ -44,19 +44,11 @@ const MTG = () => {
   };
 
   useEffect(() => {
-    // Update document title and meta tags for iOS
-    document.title = 'MTG Tracker';
+    // Mark that user has visited MTG page (for home screen preference)
+    localStorage.setItem('preferredStartPage', '/mtg');
     
-    // Update or create apple-mobile-web-app-title
-    let appleTitleMeta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
-    if (appleTitleMeta) {
-      appleTitleMeta.setAttribute('content', 'MTG Tracker');
-    } else {
-      appleTitleMeta = document.createElement('meta');
-      appleTitleMeta.setAttribute('name', 'apple-mobile-web-app-title');
-      appleTitleMeta.setAttribute('content', 'MTG Tracker');
-      document.head.appendChild(appleTitleMeta);
-    }
+    // Update document title
+    document.title = 'MTG Tracker';
     
     const unsubscribe = onValue(mtgRef, (snapshot) => {
       try {
