@@ -44,18 +44,11 @@ const MTG = () => {
   };
 
   useEffect(() => {
-    // Change manifest for iOS "Add to Home Screen"
-    const manifestLink = document.querySelector('link[rel="manifest"]');
-    const originalHref = manifestLink?.getAttribute('href');
+    // Update document title and meta tags for iOS
+    document.title = 'MTG Tracker';
     
-    if (manifestLink) {
-      manifestLink.setAttribute('href', '/manifest-mtg.json');
-    }
-    
-    // Change apple-mobile-web-app-title for iOS
+    // Update or create apple-mobile-web-app-title
     let appleTitleMeta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
-    const originalAppleTitle = appleTitleMeta?.getAttribute('content');
-    
     if (appleTitleMeta) {
       appleTitleMeta.setAttribute('content', 'MTG Tracker');
     } else {
@@ -110,13 +103,7 @@ const MTG = () => {
 
     return () => {
       unsubscribe();
-      // Restore original manifest when leaving the page
-      if (manifestLink && originalHref) {
-        manifestLink.setAttribute('href', originalHref);
-      }
-      if (appleTitleMeta && originalAppleTitle) {
-        appleTitleMeta.setAttribute('content', originalAppleTitle);
-      }
+      document.title = 'pol crosas';
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
