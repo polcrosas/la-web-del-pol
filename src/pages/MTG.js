@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { database } from '../firebase';
 import { ref, onValue, set, get } from 'firebase/database';
 
@@ -15,6 +15,8 @@ const MTG = () => {
   const holdIntervalRef = useRef(null);
   const holdTimeoutRef = useRef(null);
   const showingVictoryDialogRef = useRef(false);
+  const previousPolLifeRef = useRef(20);
+  const previousDomeLifeRef = useRef(20);
 
   const mtgRef = ref(database, 'mtg');
 
@@ -72,6 +74,56 @@ const MTG = () => {
     return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Watch for life reaching 0 and trigger victory dialog
+  useEffect(() => {
+    // Only trigger if life just changed to 0 (not already at 0)
+    // and dialog is not already showing
+    if (showingVictoryDialogRef.current) {
+      return;
+    }
+
+    let winner = null;
+    let loser = null;
+
+    if (polLife === 0 && previousPolLifeRef.current > 0) {
+      winner = 'Dome';
+      loser = 'Pol';
+    } else if (domeLife === 0 && previousDomeLifeRef.current > 0) {
+      winner = 'Pol';
+      loser = 'Dome';
+    }
+
+    if (winner) {
+      showingVictoryDialogRef.current = true;
+      
+      // Stop any ongoing hold intervals
+      if (holdTimeoutRef.current) {
+        clearTimeout(holdTimeoutRef.current);
+        holdTimeoutRef.current = null;
+      }
+      if (holdIntervalRef.current) {
+        clearInterval(holdIntervalRef.current);
+        holdIntervalRef.current = null;
+      }
+
+      // Show dialog after a brief delay
+      setTimeout(() => {
+        if (window.confirm(`${loser} reached 0 life. Record victory for ${winner}?`)) {
+          recordVictory(winner);
+        } else {
+          // If cancelled, reset life counters
+          setPolLife(20);
+          setDomeLife(20);
+        }
+        showingVictoryDialogRef.current = false;
+      }, 200);
+    }
+
+    // Update previous life values
+    previousPolLifeRef.current = polLife;
+    previousDomeLifeRef.current = domeLife;
+  }, [polLife, domeLife]);
 
   // Record a victory
   const recordVictory = async (winner) => {
@@ -156,37 +208,6 @@ const MTG = () => {
     }
   };
 
-  // Check for 0 life and show confirm dialog
-  const checkForVictory = (player, newLife) => {
-    if (newLife === 0 && !showingVictoryDialogRef.current) {
-      showingVictoryDialogRef.current = true;
-      
-      // Stop any ongoing hold intervals immediately
-      if (holdTimeoutRef.current) {
-        clearTimeout(holdTimeoutRef.current);
-        holdTimeoutRef.current = null;
-      }
-      if (holdIntervalRef.current) {
-        clearInterval(holdIntervalRef.current);
-        holdIntervalRef.current = null;
-      }
-      
-      const winner = player === 'pol' ? 'Dome' : 'Pol';
-      const loser = player === 'pol' ? 'Pol' : 'Dome';
-      
-      setTimeout(() => {
-        if (window.confirm(`${loser} reached 0 life. Record victory for ${winner}?`)) {
-          recordVictory(winner);
-        } else {
-          // If cancelled, reset life counters anyway
-          setPolLife(20);
-          setDomeLife(20);
-        }
-        showingVictoryDialogRef.current = false;
-      }, 100); // Small delay to let the UI update
-    }
-  };
-
   // Hold-to-increment functionality
   const handleMouseDown = (player, direction) => {
     let count = 0;
@@ -196,13 +217,11 @@ const MTG = () => {
     if (player === 'pol') {
       setPolLife(prev => {
         const newLife = direction === 'up' ? prev + 1 : Math.max(0, prev - 1);
-        checkForVictory('pol', newLife);
         return newLife;
       });
     } else {
       setDomeLife(prev => {
         const newLife = direction === 'up' ? prev + 1 : Math.max(0, prev - 1);
-        checkForVictory('dome', newLife);
         return newLife;
       });
     }
@@ -233,18 +252,12 @@ const MTG = () => {
           setPolLife(prev => {
             if (prev === 0 || showingVictoryDialogRef.current) return prev;
             const newLife = direction === 'up' ? prev + currentIncrement : Math.max(0, prev - currentIncrement);
-            if (newLife === 0) {
-              checkForVictory('pol', newLife);
-            }
             return newLife;
           });
         } else {
           setDomeLife(prev => {
             if (prev === 0 || showingVictoryDialogRef.current) return prev;
             const newLife = direction === 'up' ? prev + currentIncrement : Math.max(0, prev - currentIncrement);
-            if (newLife === 0) {
-              checkForVictory('dome', newLife);
-            }
             return newLife;
           });
         }
@@ -287,28 +300,9 @@ const MTG = () => {
     }
   };
 
-  // Calculate session info
-  const getSessionInfo = () => {
-    // Try to get last game from Firebase data
-    const checkLastGame = async () => {
-      const snapshot = await get(mtgRef);
-      return snapshot.val()?.lastGame;
-    };
-
+  // Calculate session info - memoized to only recalculate when todayGames changes
+  const sessionInfo = useMemo(() => {
     if (todayGames.length === 0) {
-      // Check if there's a stored last game
-      checkLastGame().then(lastGame => {
-        if (lastGame) {
-          const nextStarter = lastGame.winner === 'Pol' ? 'dome' : 'pol';
-          return {
-            lastWinner: `${lastGame.winner.toLowerCase()} won (last session)`,
-            nextStarter: nextStarter,
-            todayLeader: '',
-            specialMessage: `good luck ${nextStarter}! (•̀ᴗ•́)و`
-          };
-        }
-      });
-      
       return {
         lastWinner: 'no games played yet today',
         nextStarter: '',
@@ -475,9 +469,7 @@ const MTG = () => {
       todayLeader: todayLeader,
       specialMessage: specialMessage
     };
-  };
-
-  const sessionInfo = getSessionInfo();
+  }, [todayGames]); // Only recalculate when todayGames changes
 
   if (loading) {
     return (
@@ -648,11 +640,7 @@ const MTG = () => {
                 <button
                   onMouseDown={() => handleMouseDown('pol', 'down')}
                   onMouseUp={handleMouseUp}
-                  onMouseLeave={(e) => {
-                    handleMouseUp();
-                    e.target.style.background = '#fff';
-                    e.target.style.color = '#000';
-                  }}
+                  onMouseLeave={handleMouseUp}
                   onTouchStart={() => handleMouseDown('pol', 'down')}
                   onTouchEnd={handleMouseUp}
                   style={{
@@ -663,11 +651,16 @@ const MTG = () => {
                     fontSize: '16px',
                     fontWeight: 'normal',
                     fontFamily: 'inherit',
-                    minWidth: '45px'
+                    minWidth: '45px',
+                    transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.background = '#000';
                     e.target.style.color = '#fff';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.background = '#fff';
+                    e.target.style.color = '#000';
                   }}
                 >
                   -
@@ -675,11 +668,7 @@ const MTG = () => {
                 <button
                   onMouseDown={() => handleMouseDown('pol', 'up')}
                   onMouseUp={handleMouseUp}
-                  onMouseLeave={(e) => {
-                    handleMouseUp();
-                    e.target.style.background = '#fff';
-                    e.target.style.color = '#000';
-                  }}
+                  onMouseLeave={handleMouseUp}
                   onTouchStart={() => handleMouseDown('pol', 'up')}
                   onTouchEnd={handleMouseUp}
                   style={{
@@ -690,11 +679,16 @@ const MTG = () => {
                     fontSize: '16px',
                     fontWeight: 'normal',
                     fontFamily: 'inherit',
-                    minWidth: '45px'
+                    minWidth: '45px',
+                    transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.background = '#000';
                     e.target.style.color = '#fff';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.background = '#fff';
+                    e.target.style.color = '#000';
                   }}
                 >
                   +
@@ -717,11 +711,7 @@ const MTG = () => {
                 <button
                   onMouseDown={() => handleMouseDown('dome', 'down')}
                   onMouseUp={handleMouseUp}
-                  onMouseLeave={(e) => {
-                    handleMouseUp();
-                    e.target.style.background = '#fff';
-                    e.target.style.color = '#000';
-                  }}
+                  onMouseLeave={handleMouseUp}
                   onTouchStart={() => handleMouseDown('dome', 'down')}
                   onTouchEnd={handleMouseUp}
                   style={{
@@ -732,11 +722,16 @@ const MTG = () => {
                     fontSize: '16px',
                     fontWeight: 'normal',
                     fontFamily: 'inherit',
-                    minWidth: '45px'
+                    minWidth: '45px',
+                    transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.background = '#000';
                     e.target.style.color = '#fff';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.background = '#fff';
+                    e.target.style.color = '#000';
                   }}
                 >
                   -
@@ -744,11 +739,7 @@ const MTG = () => {
                 <button
                   onMouseDown={() => handleMouseDown('dome', 'up')}
                   onMouseUp={handleMouseUp}
-                  onMouseLeave={(e) => {
-                    handleMouseUp();
-                    e.target.style.background = '#fff';
-                    e.target.style.color = '#000';
-                  }}
+                  onMouseLeave={handleMouseUp}
                   onTouchStart={() => handleMouseDown('dome', 'up')}
                   onTouchEnd={handleMouseUp}
                   style={{
@@ -759,11 +750,16 @@ const MTG = () => {
                     fontSize: '16px',
                     fontWeight: 'normal',
                     fontFamily: 'inherit',
-                    minWidth: '45px'
+                    minWidth: '45px',
+                    transition: 'all 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.background = '#000';
                     e.target.style.color = '#fff';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.background = '#fff';
+                    e.target.style.color = '#000';
                   }}
                 >
                   +
