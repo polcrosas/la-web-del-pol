@@ -5,13 +5,22 @@ import { ref, onValue, set, get } from 'firebase/database';
 const MTG = () => {
   const [polTotal, setPolTotal] = useState(0);
   const [domeTotal, setDomeTotal] = useState(0);
+  const [polBo3, setPolBo3] = useState(0);
+  const [domeBo3, setDomeBo3] = useState(0);
+  const [polBo5, setPolBo5] = useState(0);
+  const [domeBo5, setDomeBo5] = useState(0);
+  const [seriesMode, setSeriesMode] = useState('casual');
+  const [currentSeriesScore, setCurrentSeriesScore] = useState({ pol: 0, dome: 0 });
   const [todayGames, setTodayGames] = useState([]);
   const [polLife, setPolLife] = useState(20);
   const [domeLife, setDomeLife] = useState(20);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('life');
+  const [showCenterMenu, setShowCenterMenu] = useState(false);
+  const [diceResult, setDiceResult] = useState(null);
+  const [victoryMessage, setVictoryMessage] = useState(null);
 
-  // For hold-to-increment functionality
   const holdIntervalRef = useRef(null);
   const holdTimeoutRef = useRef(null);
   const showingVictoryDialogRef = useRef(false);
@@ -20,13 +29,11 @@ const MTG = () => {
 
   const mtgRef = ref(database, 'mtg');
 
-  // Check if it's a new day and reset session if needed
   const checkNewDay = (data) => {
     const today = new Date().toDateString();
     const lastDate = data?.lastDate;
     
     if (lastDate !== today) {
-      // New day - reset today's games but keep totals and last game
       return {
         ...data,
         todayGames: [],
@@ -36,24 +43,27 @@ const MTG = () => {
     return data;
   };
 
-  // Load data from Firebase
   useEffect(() => {
     const unsubscribe = onValue(mtgRef, (snapshot) => {
       try {
         let data = snapshot.val();
         
-        // Initialize if no data exists
         if (!data) {
           data = {
             polTotal: 0,
             domeTotal: 0,
+            polBo3: 0,
+            domeBo3: 0,
+            polBo5: 0,
+            domeBo5: 0,
+            seriesMode: 'casual',
+            currentSeriesScore: { pol: 0, dome: 0 },
             lastGame: null,
             todayGames: [],
             lastDate: new Date().toDateString()
           };
           set(mtgRef, data);
         } else {
-          // Check for new day
           data = checkNewDay(data);
           if (data.lastDate !== snapshot.val()?.lastDate) {
             set(mtgRef, data);
@@ -62,6 +72,12 @@ const MTG = () => {
 
         setPolTotal(data.polTotal || 0);
         setDomeTotal(data.domeTotal || 0);
+        setPolBo3(data.polBo3 || 0);
+        setDomeBo3(data.domeBo3 || 0);
+        setPolBo5(data.polBo5 || 0);
+        setDomeBo5(data.domeBo5 || 0);
+        setSeriesMode(data.seriesMode || 'casual');
+        setCurrentSeriesScore(data.currentSeriesScore || { pol: 0, dome: 0 });
         setTodayGames(data.todayGames || []);
         setLoading(false);
       } catch (err) {
@@ -75,10 +91,7 @@ const MTG = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Watch for life reaching 0 and trigger victory dialog
   useEffect(() => {
-    // Only trigger if life just changed to 0 (not already at 0)
-    // and dialog is not already showing
     if (showingVictoryDialogRef.current) {
       return;
     }
@@ -97,7 +110,6 @@ const MTG = () => {
     if (winner) {
       showingVictoryDialogRef.current = true;
       
-      // Stop any ongoing hold intervals
       if (holdTimeoutRef.current) {
         clearTimeout(holdTimeoutRef.current);
         holdTimeoutRef.current = null;
@@ -107,12 +119,10 @@ const MTG = () => {
         holdIntervalRef.current = null;
       }
 
-      // Show dialog after a brief delay
       setTimeout(() => {
         if (window.confirm(`${loser} reached 0 life. Record victory for ${winner}?`)) {
           recordVictory(winner);
         } else {
-          // If cancelled, reset life counters
           setPolLife(20);
           setDomeLife(20);
         }
@@ -120,15 +130,29 @@ const MTG = () => {
       }, 200);
     }
 
-    // Update previous life values
     previousPolLifeRef.current = polLife;
     previousDomeLifeRef.current = domeLife;
   }, [polLife, domeLife]);
 
-  // Record a victory
+  const startSeries = async (mode) => {
+    try {
+      const snapshot = await get(mtgRef);
+      let data = snapshot.val() || {};
+      
+      data.seriesMode = mode;
+      data.currentSeriesScore = { pol: 0, dome: 0 };
+      
+      await set(mtgRef, data);
+      setSeriesMode(mode);
+      setCurrentSeriesScore({ pol: 0, dome: 0 });
+    } catch (err) {
+      setError('Failed to start series');
+      console.error(err);
+    }
+  };
+
   const recordVictory = async (winner) => {
     try {
-      // Reset life counters immediately to prevent multiple triggers
       setPolLife(20);
       setDomeLife(20);
       
@@ -136,21 +160,101 @@ const MTG = () => {
       let data = snapshot.val() || {
         polTotal: 0,
         domeTotal: 0,
+        polBo3: 0,
+        domeBo3: 0,
+        polBo5: 0,
+        domeBo5: 0,
+        seriesMode: 'casual',
+        currentSeriesScore: { pol: 0, dome: 0 },
         lastGame: null,
         todayGames: [],
         lastDate: new Date().toDateString()
       };
 
-      // Update total
       if (winner === 'Pol') {
         data.polTotal = (data.polTotal || 0) + 1;
       } else {
         data.domeTotal = (data.domeTotal || 0) + 1;
       }
 
-      // Add to today's games
+      const currentMode = data.seriesMode || 'casual';
+      const currentScore = data.currentSeriesScore || { pol: 0, dome: 0 };
+      
+      if (currentMode !== 'casual') {
+        if (winner === 'Pol') {
+          currentScore.pol += 1;
+        } else {
+          currentScore.dome += 1;
+        }
+        data.currentSeriesScore = currentScore;
+        
+        let seriesComplete = false;
+        let seriesWinner = null;
+        
+        if (currentMode === 'bo3' && (currentScore.pol === 2 || currentScore.dome === 2)) {
+          seriesComplete = true;
+          seriesWinner = currentScore.pol === 2 ? 'Pol' : 'Dome';
+          if (seriesWinner === 'Pol') {
+            data.polBo3 = (data.polBo3 || 0) + 1;
+          } else {
+            data.domeBo3 = (data.domeBo3 || 0) + 1;
+          }
+        } else if (currentMode === 'bo5' && (currentScore.pol === 3 || currentScore.dome === 3)) {
+          seriesComplete = true;
+          seriesWinner = currentScore.pol === 3 ? 'Pol' : 'Dome';
+          if (seriesWinner === 'Pol') {
+            data.polBo5 = (data.polBo5 || 0) + 1;
+          } else {
+            data.domeBo5 = (data.domeBo5 || 0) + 1;
+          }
+        }
+        
+        if (seriesComplete) {
+          // Save data first
+          await set(mtgRef, data);
+          
+          // For bo3, offer to extend to bo5
+          if (currentMode === 'bo3') {
+            setTimeout(() => {
+              const extendToBo5 = window.confirm(
+                `${seriesWinner} wins the BO3 series ${currentScore.pol}-${currentScore.dome}!\n\nExtend to Best of 5?`
+              );
+              
+              if (extendToBo5) {
+                // Continue the series as bo5
+                get(mtgRef).then(snapshot => {
+                  let updatedData = snapshot.val();
+                  updatedData.seriesMode = 'bo5';
+                  // Keep the current score
+                  set(mtgRef, updatedData);
+                });
+              } else {
+                // Reset to casual
+                get(mtgRef).then(snapshot => {
+                  let updatedData = snapshot.val();
+                  updatedData.seriesMode = 'casual';
+                  updatedData.currentSeriesScore = { pol: 0, dome: 0 };
+                  set(mtgRef, updatedData);
+                });
+              }
+            }, 100);
+          } else {
+            // For bo5, just reset to casual
+            data.seriesMode = 'casual';
+            data.currentSeriesScore = { pol: 0, dome: 0 };
+            await set(mtgRef, data);
+            
+            setTimeout(() => {
+              alert(`${seriesWinner} wins the BO5 series ${currentScore.pol}-${currentScore.dome}!`);
+            }, 100);
+          }
+          return; // Exit early since we're handling the save
+        }
+      }
+
       const game = {
         winner: winner,
+        seriesMode: currentMode,
         timestamp: new Date().toISOString(),
         time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
       };
@@ -166,7 +270,6 @@ const MTG = () => {
     }
   };
 
-  // Undo last game
   const undoLastGame = async () => {
     try {
       const snapshot = await get(mtgRef);
@@ -177,23 +280,18 @@ const MTG = () => {
         return;
       }
 
-      // Get the last game
       const lastGame = data.todayGames[data.todayGames.length - 1];
-      
-      // Remove last game from today's games
       const newTodayGames = data.todayGames.slice(0, -1);
       
-      // Decrease the winner's total
       if (lastGame.winner === 'Pol') {
         data.polTotal = Math.max(0, (data.polTotal || 0) - 1);
       } else {
         data.domeTotal = Math.max(0, (data.domeTotal || 0) - 1);
       }
       
-      // Update last game to the previous one (if exists)
       const newLastGame = newTodayGames.length > 0
         ? newTodayGames[newTodayGames.length - 1]
-        : data.lastGame; // Keep the old lastGame if no games left today
+        : data.lastGame;
 
       await set(mtgRef, {
         ...data,
@@ -208,12 +306,10 @@ const MTG = () => {
     }
   };
 
-  // Hold-to-increment functionality
   const handleMouseDown = (player, direction) => {
     let count = 0;
     let currentIncrement = 1;
     
-    // Initial click
     if (player === 'pol') {
       setPolLife(prev => {
         const newLife = direction === 'up' ? prev + 1 : Math.max(0, prev - 1);
@@ -226,10 +322,8 @@ const MTG = () => {
       });
     }
     
-    // Start holding after 300ms
     const timeout = setTimeout(() => {
       const interval = setInterval(() => {
-        // Stop if dialog is showing
         if (showingVictoryDialogRef.current) {
           clearInterval(interval);
           return;
@@ -237,15 +331,14 @@ const MTG = () => {
         
         count++;
         
-        // Determine increment based on hold duration
         if (count < 10) {
-          currentIncrement = 1; // First second: +1
+          currentIncrement = 1;
         } else if (count < 20) {
-          currentIncrement = 3; // Next second: +3
+          currentIncrement = 3;
         } else if (count < 30) {
-          currentIncrement = 5; // Next second: +5
+          currentIncrement = 5;
         } else {
-          currentIncrement = 10; // After that: +10
+          currentIncrement = 10;
         }
         
         if (player === 'pol') {
@@ -261,7 +354,7 @@ const MTG = () => {
             return newLife;
           });
         }
-      }, 100); // Update every 100ms
+      }, 100);
       
       holdIntervalRef.current = interval;
     }, 300);
@@ -280,7 +373,32 @@ const MTG = () => {
     }
   };
 
-  // Clear all data
+  const throwDice = () => {
+    // Simulate rolling with random numbers
+    let rollCount = 0;
+    const rollInterval = setInterval(() => {
+      const tempResult = Math.floor(Math.random() * 20) + 1;
+      setDiceResult(tempResult);
+      rollCount++;
+      
+      if (rollCount >= 10) {
+        clearInterval(rollInterval);
+        // Final result
+        const finalResult = Math.floor(Math.random() * 20) + 1;
+        setDiceResult(finalResult);
+        setTimeout(() => setDiceResult(null), 3000);
+      }
+    }, 100);
+  };
+
+  const handleConcede = (player) => {
+    const winner = player === 'pol' ? 'Dome' : 'Pol';
+    if (window.confirm(`${player} concedes. Record victory for ${winner}?`)) {
+      recordVictory(winner);
+      setShowCenterMenu(false);
+    }
+  };
+
   const clearAll = async () => {
     if (window.confirm('Clear ALL data? This will reset everything including total victories. This cannot be undone!')) {
       if (window.confirm('Are you absolutely sure? This will delete all victory records permanently.')) {
@@ -288,6 +406,10 @@ const MTG = () => {
           await set(mtgRef, {
             polTotal: 0,
             domeTotal: 0,
+            polBo3: 0,
+            domeBo3: 0,
+            polBo5: 0,
+            domeBo5: 0,
             lastGame: null,
             todayGames: [],
             lastDate: new Date().toDateString()
@@ -300,7 +422,6 @@ const MTG = () => {
     }
   };
 
-  // Calculate session info - memoized to only recalculate when todayGames changes
   const sessionInfo = useMemo(() => {
     if (todayGames.length === 0) {
       return {
@@ -326,139 +447,100 @@ const MTG = () => {
       todayLeader = `tied (${polWins}-${domeWins})`;
     }
 
-    // Check for various game situations
-    let specialMessage = null;
-    let streakCount = 0;
-    let previousWinner = null;
-    
-    // Count consecutive wins from the end
-    for (let i = todayGames.length - 1; i >= 0; i--) {
-      if (todayGames[i].winner === lastGame.winner) {
-        streakCount++;
+    // Calculate current streak
+    let currentStreak = 1;
+    let streakPlayer = lastGame.winner;
+    for (let i = todayGames.length - 2; i >= 0; i--) {
+      if (todayGames[i].winner === streakPlayer) {
+        currentStreak++;
       } else {
-        previousWinner = todayGames[i].winner;
         break;
       }
     }
-    
-    const winDiff = Math.abs(polWins - domeWins);
-    const totalGames = todayGames.length;
-    const loser = lastGame.winner === 'Pol' ? 'dome' : 'pol';
-    
-    // Check if someone just broke a streak (previous player had 3+ wins)
-    let previousStreakCount = 0;
-    if (previousWinner && totalGames >= 4) {
-      for (let i = todayGames.length - 2; i >= 0; i--) {
-        if (todayGames[i].winner === previousWinner) {
-          previousStreakCount++;
-        } else {
-          break;
+
+    // Check if a streak was just broken (previous game had a different winner)
+    let brokenStreak = 0;
+    let brokenStreakPlayer = null;
+    if (todayGames.length >= 2) {
+      const previousWinner = todayGames[todayGames.length - 2].winner;
+      if (previousWinner !== lastGame.winner) {
+        // Count how long the previous streak was
+        let streakCount = 1;
+        for (let i = todayGames.length - 3; i >= 0; i--) {
+          if (todayGames[i].winner === previousWinner) {
+            streakCount++;
+          } else {
+            break;
+          }
+        }
+        if (streakCount >= 3) {
+          brokenStreak = streakCount;
+          brokenStreakPlayer = previousWinner;
         }
       }
     }
+
+    // Generate context-aware message
+    let specialMessage = null;
     
-    // Priority 1: Streak breaker (broke a 3+ streak)
-    if (previousStreakCount >= 3 && streakCount === 1) {
-      const messages = [
-        `${lastGame.winner.toLowerCase()} breaks the streak! (ง'̀-'́)ง ended ${previousStreakCount} wins!`,
-        `streak broken! ᕙ(⇀‸↼‶)ᕗ ${lastGame.winner.toLowerCase()} stops ${previousWinner.toLowerCase()}!`,
-        `${previousWinner.toLowerCase()}'s ${previousStreakCount} streak ended! (╯°□°)╯ ${lastGame.winner.toLowerCase()} fights back!`
-      ];
-      specialMessage = messages[Math.floor(Math.random() * messages.length)];
-    }
-    // Priority 2: Best of 5 winner (3-2)
-    else if ((polWins === 3 && domeWins === 2) || (domeWins === 3 && polWins === 2)) {
-      const winner = polWins === 3 ? 'pol' : 'dome';
-      const messages = [
-        `${winner} takes it! ᕙ(⇀‸↼‶)ᕗ best of 5 complete (3-2)`,
-        `${winner} wins the series! (ง'̀-'́)ง 3-2 victory!`,
-        `close one! ${winner} prevails ᕕ( ᐛ )ᕗ 3-2`
-      ];
-      specialMessage = messages[Math.floor(Math.random() * messages.length)];
-    }
-    // Priority 3: Best of 3 winner (2-1)
-    else if ((polWins === 2 && domeWins === 1) || (domeWins === 2 && polWins === 1)) {
-      const winner = polWins === 2 ? 'pol' : 'dome';
-      const messages = [
-        `${winner} wins! (•̀ᴗ•́)و best of 3 complete (2-1)`,
-        `${winner} takes the series! ᕙ(⇀‸↼‶)ᕗ 2-1`,
-        `${winner} clinches it! (ง'̀-'́)ง 2-1 victory`
-      ];
-      specialMessage = messages[Math.floor(Math.random() * messages.length)];
-    }
-    // Priority 4: Match point (2-2)
-    else if (polWins === 2 && domeWins === 2) {
-      specialMessage = `match point! (╯°□°)╯ 2-2 - winner takes all!`;
-    }
-    // Priority 5: Best of 3 match point (1-1)
-    else if (polWins === 1 && domeWins === 1 && totalGames === 2) {
-      specialMessage = `rubber match! (ง'̀-'́)ง 1-1 - next wins best of 3!`;
-    }
-    // Priority 6: Long win streaks (5+)
-    else if (streakCount >= 5) {
-      const messages = [
-        `${lastGame.winner.toLowerCase()} is unstoppable! ᕙ(⇀‸↼‶)ᕗ ${streakCount} wins!`,
-        `${lastGame.winner.toLowerCase()} dominating! ୧(＾ 〰 ＾)୨ ${streakCount} streak!`,
-        `${loser} can't catch a break... (╥﹏╥) ${streakCount} losses`
-      ];
-      specialMessage = messages[Math.floor(Math.random() * messages.length)];
-    }
-    // Priority 7: Medium win streaks (3-4)
-    else if (streakCount >= 3) {
-      const messages = [
-        `${lastGame.winner.toLowerCase()} is on fire! ＼(＾O＾)／ ${streakCount} wins!`,
-        `${lastGame.winner.toLowerCase()} heating up! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ ${streakCount} streak!`,
-        `${loser} needs a comeback! (｡•́︿•̀｡) ${streakCount} down`
-      ];
-      specialMessage = messages[Math.floor(Math.random() * messages.length)];
-    }
-    // Priority 8: Big lead (3+ games ahead)
-    else if (winDiff >= 3 && totalGames >= 4) {
-      const leader = polWins > domeWins ? 'pol' : 'dome';
-      const messages = [
-        `${leader} crushing it! (ง'̀-'́)ง ${polWins > domeWins ? polWins : domeWins}-${polWins > domeWins ? domeWins : polWins}`,
-        `${loser} in trouble... (⊙_⊙;) down by ${winDiff}`,
-        `${leader} running away! ᕕ( ᐛ )ᕗ ${polWins > domeWins ? polWins : domeWins}-${polWins > domeWins ? domeWins : polWins}`
-      ];
-      specialMessage = messages[Math.floor(Math.random() * messages.length)];
-    }
-    // Priority 9: Close game (tied or 1 game difference)
-    else if (winDiff <= 1 && totalGames >= 3) {
-      const messages = [
-        `neck and neck! (ง •̀_•́)ง ${polWins}-${domeWins}`,
-        `so close! ᕙ(⇀‸↼‶)ᕗ ${polWins}-${domeWins}`,
-        `anyone's game! (•̀ᴗ•́)و ${polWins}-${domeWins}`
-      ];
-      specialMessage = messages[Math.floor(Math.random() * messages.length)];
-    }
-    // Priority 10: First game of the day
-    else if (totalGames === 1) {
-      const messages = [
-        `first blood! (•̀ᴗ•́)و ${lastGame.winner.toLowerCase()} takes game 1`,
-        `${lastGame.winner.toLowerCase()} strikes first! (ง'̀-'́)ง 1-0`,
-        `game on! (ง •̀_•́)ง ${lastGame.winner.toLowerCase()} leads`
-      ];
-      specialMessage = messages[Math.floor(Math.random() * messages.length)];
-    }
-    // Priority 11: Comeback win (was losing, now tied or ahead)
-    else if (totalGames >= 2) {
-      const previousPolWins = todayGames.slice(0, -1).filter(g => g.winner === 'Pol').length;
-      const previousDomeWins = todayGames.slice(0, -1).filter(g => g.winner === 'Dome').length;
+    // Check if in a series (bo3 or bo5)
+    if (seriesMode === 'bo3' || seriesMode === 'bo5') {
+      const seriesName = seriesMode === 'bo3' ? 'best of 3' : 'best of 5';
+      const winTarget = seriesMode === 'bo3' ? 2 : 3;
+      const seriesPolWins = currentSeriesScore.pol;
+      const seriesDomeWins = currentSeriesScore.dome;
       
-      if (lastGame.winner === 'Pol' && previousPolWins < previousDomeWins && polWins >= domeWins) {
-        specialMessage = `pol fights back! ᕦ(ò_óˇ)ᕤ comeback complete!`;
-      } else if (lastGame.winner === 'Dome' && previousDomeWins < previousPolWins && domeWins >= polWins) {
-        specialMessage = `dome fights back! ᕦ(ò_óˇ)ᕤ comeback complete!`;
+      if (seriesPolWins === winTarget - 1 && seriesDomeWins < winTarget - 1) {
+        specialMessage = `pol is one win away from taking the ${seriesName}! >:)`;
+      } else if (seriesDomeWins === winTarget - 1 && seriesPolWins < winTarget - 1) {
+        specialMessage = `dome is one win away from taking the ${seriesName}! >:)`;
+      } else if (seriesPolWins === seriesDomeWins) {
+        specialMessage = `${seriesName} is tied ${seriesPolWins}-${seriesDomeWins}! next game matters! (╯°□°)╯`;
+      } else {
+        const leader = seriesPolWins > seriesDomeWins ? 'pol' : 'dome';
+        specialMessage = `${leader} leads the ${seriesName} ${Math.max(seriesPolWins, seriesDomeWins)}-${Math.min(seriesPolWins, seriesDomeWins)}`;
       }
     }
-    
-    // Default: Good luck message
-    if (!specialMessage) {
+    // Streak break messages (highest priority in casual mode)
+    else if (brokenStreak > 0) {
+      const messages = [
+        `${lastGame.winner.toLowerCase()} breaks ${brokenStreakPlayer.toLowerCase()}'s ${brokenStreak} game streak! \\(o_o)/`,
+        `streak breaker! ${lastGame.winner.toLowerCase()} ends ${brokenStreakPlayer.toLowerCase()}'s ${brokenStreak} win run! (x_x)`,
+        `${brokenStreakPlayer.toLowerCase()}'s ${brokenStreak} game streak is over! ${lastGame.winner.toLowerCase()} strikes back! ᕙ(⇀‸↼‶)ᕗ`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    // Active streak messages for casual games
+    else if (currentStreak >= 3) {
+      const messages = [
+        `${streakPlayer.toLowerCase()} is on fire! ${currentStreak} wins in a row! ᕙ(⇀‸↼‶)ᕗ`,
+        `${currentStreak} game streak for ${streakPlayer.toLowerCase()}! unstoppable! (•̀ᴗ•́)و`,
+        `${streakPlayer.toLowerCase()} dominating with ${currentStreak} straight wins! ᕦ(ò_óˇ)ᕤ`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    // Close score messages
+    else if (Math.abs(polWins - domeWins) === 0 && todayGames.length >= 2) {
+      const messages = [
+        `perfectly balanced! ${polWins}-${domeWins} (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧`,
+        `dead even at ${polWins}-${domeWins}! who will break the tie? (o_O)`,
+        `tied ${polWins}-${domeWins}! the tension! (@_@)`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    // One-sided matches
+    else if (todayGames.length >= 3 && (polWins === 0 || domeWins === 0)) {
+      const winningPlayer = polWins > 0 ? 'pol' : 'dome';
+      const losingPlayer = polWins > 0 ? 'dome' : 'pol';
+      specialMessage = `${losingPlayer} still looking for their first win today... (╥_╥)`;
+    }
+    // Default encouraging messages
+    else {
       const messages = [
         `good luck ${nextStarter}! (•̀ᴗ•́)و`,
         `your turn ${nextStarter}! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧`,
         `${nextStarter} starts! ᕙ(⇀‸↼‶)ᕗ`,
-        `let's go ${nextStarter}! (ง'̀-'́)ง`
+        `let's go ${nextStarter}! ᕦ(ò_óˇ)ᕤ`
       ];
       specialMessage = messages[Math.floor(Math.random() * messages.length)];
     }
@@ -469,7 +551,7 @@ const MTG = () => {
       todayLeader: todayLeader,
       specialMessage: specialMessage
     };
-  }, [todayGames]); // Only recalculate when todayGames changes
+  }, [todayGames, seriesMode, currentSeriesScore]);
 
   if (loading) {
     return (
@@ -521,450 +603,811 @@ const MTG = () => {
   }
 
   return (
-    <div style={{
-      padding: '10px',
-      maxWidth: '600px',
-      margin: '0 auto'
-    }}>
-      {/* Header */}
+    <>
+      <style>{`
+        /* Prevent text selection on buttons */
+        button {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Desktop: Hide tabs and life counter, only show victory counter */
+        .tab-navigation {
+          display: none;
+        }
+        .desktop-layout {
+          display: block;
+        }
+        .life-counter-section {
+          display: none;
+        }
+        .victory-counter-section {
+          display: block;
+        }
+        
+        /* Mobile: Show tabs and switch between sections */
+        @media (max-width: 768px) {
+          .tab-navigation {
+            display: flex !important;
+          }
+          .desktop-layout {
+            display: block;
+          }
+          .life-counter-section {
+            display: none;
+          }
+          .victory-counter-section {
+            display: none;
+          }
+          .life-counter-section.active {
+            display: flex !important;
+          }
+          .victory-counter-section.active {
+            display: block !important;
+          }
+        }
+
+        /* Mobile life counter - vertical split mirrored layout */
+        @media (max-width: 768px) {
+          .mobile-life-container {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            background: #fff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+          }
+
+          .mobile-player-section {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            position: relative !important;
+            border: none !important;
+            padding: 0 !important;
+          }
+
+          .mobile-player-top {
+            transform: rotate(180deg) !important;
+            border-bottom: 2px solid #000 !important;
+          }
+
+          .mobile-player-bottom {
+            border-top: 2px solid #000 !important;
+          }
+
+          .mobile-life-display {
+            font-size: 120px !important;
+            font-weight: bold !important;
+            line-height: 1 !important;
+            margin: 20px 0 !important;
+            user-select: none !important;
+          }
+
+          .mobile-player-name {
+            position: absolute !important;
+            left: 20px !important;
+            top: 20px !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            text-transform: uppercase !important;
+            color: #000 !important;
+            user-select: none !important;
+            opacity: 0.4 !important;
+            letter-spacing: 2px !important;
+          }
+
+          .mobile-button-row {
+            display: flex !important;
+            gap: 20px !important;
+            width: 100% !important;
+            max-width: 400px !important;
+            padding: 0 30px !important;
+          }
+
+          .mobile-life-button {
+            flex: 1 !important;
+            padding: 40px 20px !important;
+            border: 3px solid #000 !important;
+            background: #fff !important;
+            font-size: 48px !important;
+            font-weight: bold !important;
+            cursor: pointer !important;
+            touch-action: manipulation !important;
+            user-select: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+            border-radius: 8px !important;
+            transition: all 0.1s ease !important;
+          }
+
+          .mobile-life-button:active {
+            background: #000 !important;
+            color: #fff !important;
+            transform: scale(0.95) !important;
+          }
+
+          .mobile-center-button {
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: 56px !important;
+            height: 56px !important;
+            border: 3px solid #000 !important;
+            background: rgba(255, 255, 255, 0.98) !important;
+            font-size: 22px !important;
+            font-weight: bold !important;
+            cursor: pointer !important;
+            border-radius: 50% !important;
+            backdrop-filter: blur(10px) !important;
+            z-index: 100 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+            transition: all 0.2s ease !important;
+          }
+
+          .mobile-center-button:active {
+            transform: translate(-50%, -50%) scale(0.95) !important;
+            background: #000 !important;
+            color: #fff !important;
+          }
+
+          .mobile-center-menu {
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            background: rgba(255, 255, 255, 0.98) !important;
+            border: 3px solid #000 !important;
+            border-radius: 16px !important;
+            padding: 20px !important;
+            backdrop-filter: blur(10px) !important;
+            z-index: 101 !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
+            min-width: 250px !important;
+          }
+
+          .mobile-menu-button {
+            width: 100% !important;
+            padding: 16px !important;
+            margin-bottom: 10px !important;
+            border: 2px solid #000 !important;
+            background: #fff !important;
+            font-size: 14px !important;
+            font-weight: normal !important;
+            cursor: pointer !important;
+            border-radius: 8px !important;
+            text-transform: lowercase !important;
+            transition: all 0.2s ease !important;
+          }
+
+          .mobile-menu-button:last-child {
+            margin-bottom: 0 !important;
+          }
+
+          .mobile-menu-button:active {
+            background: #000 !important;
+            color: #fff !important;
+            transform: scale(0.98) !important;
+          }
+
+          .mobile-menu-button.danger {
+            border-color: #dc2626 !important;
+            color: #dc2626 !important;
+          }
+
+          .mobile-menu-button.danger:active {
+            background: #dc2626 !important;
+            color: #fff !important;
+          }
+
+          .dice-result-overlay {
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            background: #fff !important;
+            color: #000 !important;
+            font-size: 80px !important;
+            font-weight: bold !important;
+            width: 140px !important;
+            height: 140px !important;
+            border-radius: 12px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 200 !important;
+            animation: diceAppear 0.2s ease !important;
+            border: 3px solid #000 !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+          }
+
+          @keyframes diceAppear {
+            0% {
+              transform: translate(-50%, -50%) scale(0.8);
+              opacity: 0;
+            }
+            100% {
+              transform: translate(-50%, -50%) scale(1);
+              opacity: 1;
+            }
+          }
+
+          .victory-message-banner {
+            position: absolute !important;
+            right: 15px !important;
+            top: 50% !important;
+            transform: translateY(-50%) rotate(90deg) !important;
+            transform-origin: center !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            color: #000 !important;
+            padding: 10px 20px !important;
+            font-size: 11px !important;
+            font-weight: normal !important;
+            text-transform: lowercase !important;
+            border-radius: 8px !important;
+            z-index: 150 !important;
+            animation: bannerSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+            border: 2px solid #000 !important;
+            white-space: nowrap !important;
+            line-height: 1.4 !important;
+            text-align: center !important;
+            backdrop-filter: blur(10px) !important;
+          }
+
+          @keyframes bannerSlideIn {
+            0% {
+              transform: translateY(-50%) rotate(90deg) translateY(-20px);
+              opacity: 0;
+            }
+            100% {
+              transform: translateY(-50%) rotate(90deg) translateY(0);
+              opacity: 1;
+            }
+          }
+        }
+      `}</style>
+      
       <div style={{
-        border: '1px solid #000',
         padding: '10px',
-        marginBottom: '10px',
-        textAlign: 'center',
-        background: '#fff'
+        maxWidth: '600px',
+        margin: '0 auto'
       }}>
-        <h1 style={{
-          fontSize: '14px',
-          fontWeight: 'normal',
-          margin: '0 0 3px 0',
-          textTransform: 'lowercase'
-        }}>
-          mtg victory tracker
-        </h1>
-        <p style={{
-          fontSize: '11px',
-          color: '#666',
-          margin: 0,
-          textTransform: 'lowercase'
-        }}>
-          pol vs dome
-        </p>
-      </div>
-
-      <div style={{
-        border: '1px solid #000',
-        padding: '15px',
-        background: '#fff'
-      }}>
-        {/* Global Stats */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '10px',
-          marginBottom: '15px'
-        }}>
-          <div
-            onClick={() => recordVictory('Pol')}
-            style={{
-              border: '1px solid #000',
-              padding: '15px 10px',
-              textAlign: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#000';
-              e.currentTarget.style.color = '#fff';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#fff';
-              e.currentTarget.style.color = '#000';
-            }}
-          >
-            <h2 style={{ fontSize: '12px', fontWeight: 'normal', marginBottom: '8px' }}>pol</h2>
-            <div style={{ fontSize: '32px', fontWeight: 'normal', margin: '5px 0' }}>
-              {polTotal}
-            </div>
-            <p style={{ fontSize: '11px', color: '#666' }}>victories</p>
-          </div>
-          <div
-            onClick={() => recordVictory('Dome')}
-            style={{
-              border: '1px solid #000',
-              padding: '15px 10px',
-              textAlign: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#000';
-              e.currentTarget.style.color = '#fff';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#fff';
-              e.currentTarget.style.color = '#000';
-            }}
-          >
-            <h2 style={{ fontSize: '12px', fontWeight: 'normal', marginBottom: '8px' }}>dome</h2>
-            <div style={{ fontSize: '32px', fontWeight: 'normal', margin: '5px 0' }}>
-              {domeTotal}
-            </div>
-            <p style={{ fontSize: '11px', color: '#666' }}>victories</p>
-          </div>
-        </div>
-
-        {/* Life Counter */}
+        {/* Header */}
         <div style={{
           border: '1px solid #000',
-          padding: '15px 10px',
-          marginBottom: '15px'
-        }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '10px'
-          }}>
-            {/* Pol Life */}
-            <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '11px', marginBottom: '5px', color: '#666' }}>pol</p>
-              <div style={{
-                fontSize: '36px',
-                fontWeight: 'normal',
-                marginBottom: '8px',
-                color: '#000'
-              }}>
-                {polLife}
-              </div>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                <button
-                  onMouseDown={() => handleMouseDown('pol', 'down')}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onTouchStart={() => handleMouseDown('pol', 'down')}
-                  onTouchEnd={handleMouseUp}
-                  style={{
-                    padding: '8px 16px',
-                    border: '1px solid #000',
-                    background: '#fff',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    fontWeight: 'normal',
-                    fontFamily: 'inherit',
-                    minWidth: '45px',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = '#000';
-                    e.target.style.color = '#fff';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.background = '#fff';
-                    e.target.style.color = '#000';
-                  }}
-                >
-                  -
-                </button>
-                <button
-                  onMouseDown={() => handleMouseDown('pol', 'up')}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onTouchStart={() => handleMouseDown('pol', 'up')}
-                  onTouchEnd={handleMouseUp}
-                  style={{
-                    padding: '8px 16px',
-                    border: '1px solid #000',
-                    background: '#fff',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    fontWeight: 'normal',
-                    fontFamily: 'inherit',
-                    minWidth: '45px',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = '#000';
-                    e.target.style.color = '#fff';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.background = '#fff';
-                    e.target.style.color = '#000';
-                  }}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* Dome Life */}
-            <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '11px', marginBottom: '5px', color: '#666' }}>dome</p>
-              <div style={{
-                fontSize: '36px',
-                fontWeight: 'normal',
-                marginBottom: '8px',
-                color: '#000'
-              }}>
-                {domeLife}
-              </div>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                <button
-                  onMouseDown={() => handleMouseDown('dome', 'down')}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onTouchStart={() => handleMouseDown('dome', 'down')}
-                  onTouchEnd={handleMouseUp}
-                  style={{
-                    padding: '8px 16px',
-                    border: '1px solid #000',
-                    background: '#fff',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    fontWeight: 'normal',
-                    fontFamily: 'inherit',
-                    minWidth: '45px',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = '#000';
-                    e.target.style.color = '#fff';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.background = '#fff';
-                    e.target.style.color = '#000';
-                  }}
-                >
-                  -
-                </button>
-                <button
-                  onMouseDown={() => handleMouseDown('dome', 'up')}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onTouchStart={() => handleMouseDown('dome', 'up')}
-                  onTouchEnd={handleMouseUp}
-                  style={{
-                    padding: '8px 16px',
-                    border: '1px solid #000',
-                    background: '#fff',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    fontWeight: 'normal',
-                    fontFamily: 'inherit',
-                    minWidth: '45px',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = '#000';
-                    e.target.style.color = '#fff';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.background = '#fff';
-                    e.target.style.color = '#000';
-                  }}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          {/* Reset Life Button */}
-          <div style={{ textAlign: 'center', marginTop: '10px' }}>
-            <button
-              onClick={() => {
-                setPolLife(20);
-                setDomeLife(20);
-              }}
-              style={{
-                padding: '8px 16px',
-                border: '1px solid #999',
-                background: '#fff',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: 'normal',
-                color: '#666',
-                fontFamily: 'inherit'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = '#666';
-                e.target.style.borderColor = '#666';
-                e.target.style.color = '#fff';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = '#fff';
-                e.target.style.borderColor = '#999';
-                e.target.style.color = '#666';
-              }}
-            >
-              reset life
-            </button>
-          </div>
-        </div>
-
-        {/* Session Info */}
-        <div style={{
-          border: '1px solid #000',
-          padding: '12px 10px',
-          marginBottom: '15px',
-          background: 'rgba(0, 0, 0, 0.02)'
-        }}>
-          <p style={{ fontSize: '12px', lineHeight: '1.5', marginBottom: '5px' }}>
-            {sessionInfo.lastWinner}
-          </p>
-          {sessionInfo.nextStarter && (
-            <p style={{ fontSize: '12px', lineHeight: '1.5', marginBottom: '5px' }}>
-              next: {sessionInfo.nextStarter}
-            </p>
-          )}
-          {sessionInfo.todayLeader && (
-            <p style={{ fontSize: '12px', lineHeight: '1.5', marginBottom: '5px' }}>
-              leader: {sessionInfo.todayLeader}
-            </p>
-          )}
-          {sessionInfo.specialMessage && (
-            <p style={{
-              fontSize: '12px',
-              lineHeight: '1.5',
-              marginTop: '8px',
-              padding: '8px',
-              background: '#fff',
-              border: '1px solid #000',
-              textAlign: 'center'
-            }}>
-              {sessionInfo.specialMessage}
-            </p>
-          )}
-        </div>
-
-
-        {/* Today's Game Log */}
-        <div style={{
-          border: '1px solid #000',
-          padding: '12px 10px',
-          marginTop: '10px',
-          maxHeight: '300px',
-          overflowY: 'auto',
+          padding: '10px',
+          marginBottom: '10px',
+          textAlign: 'center',
           background: '#fff'
         }}>
-          <h3 style={{
-            fontSize: '12px',
+          <h1 style={{
+            fontSize: '14px',
             fontWeight: 'normal',
-            marginBottom: '8px',
+            margin: '0 0 3px 0',
             textTransform: 'lowercase'
           }}>
-            today's games
-          </h3>
-          {todayGames.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              color: '#666',
-              padding: '10px',
-              fontSize: '11px',
-              textTransform: 'lowercase'
-            }}>
-              no games today
-            </div>
-          ) : (
-            <div>
-              {[...todayGames].reverse().map((game, index) => (
-                <div
-                  key={index}
-                  style={{
-                    padding: '6px 8px',
-                    borderBottom: index === todayGames.length - 1 ? 'none' : '1px solid #eee',
-                    fontSize: '11px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}
-                >
-                  <span style={{ textTransform: 'lowercase' }}>
-                    {game.winner.toLowerCase()} won
-                    {index === 0 ? ' (recent)' : ''}
-                  </span>
-                  <span style={{ color: '#666', fontSize: '10px' }}>{game.time}</span>
-                </div>
-              ))}
-            </div>
-          )}
+            mtg victory tracker
+          </h1>
+          <p style={{
+            fontSize: '11px',
+            color: '#666',
+            margin: 0,
+            textTransform: 'lowercase'
+          }}>
+            pol vs dome
+          </p>
         </div>
 
-        {/* Danger Zone */}
-        <div style={{
-          marginTop: '10px',
-          paddingTop: '10px',
-          borderTop: '1px solid #000'
-        }}>
-          <h3 style={{
-            fontSize: '12px',
-            fontWeight: 'normal',
-            marginBottom: '8px',
-            color: '#666',
-            textTransform: 'lowercase'
-          }}>
-            danger zone
-          </h3>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '8px'
+        {/* Tab Navigation - Only visible on mobile */}
+        <div className="tab-navigation" style={{
+            border: '1px solid #000',
+            marginBottom: '10px',
+            background: '#fff'
           }}>
             <button
-              onClick={undoLastGame}
+              onClick={() => setActiveTab('life')}
               style={{
-                padding: '10px 12px',
-                border: '1px solid #999',
-                background: '#fff',
+                flex: 1,
+                padding: '15px',
+                border: 'none',
+                borderRight: '1px solid #000',
+                background: activeTab === 'life' ? '#000' : '#fff',
+                color: activeTab === 'life' ? '#fff' : '#666',
                 cursor: 'pointer',
-                fontSize: '11px',
-                fontWeight: 'normal',
-                color: '#666',
+                fontSize: '13px',
+                fontWeight: activeTab === 'life' ? 'bold' : 'normal',
                 fontFamily: 'inherit',
-                textTransform: 'lowercase'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = '#666';
-                e.target.style.borderColor = '#666';
-                e.target.style.color = '#fff';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = '#fff';
-                e.target.style.borderColor = '#999';
-                e.target.style.color = '#666';
+                textTransform: 'lowercase',
+                transition: 'all 0.2s ease'
               }}
             >
-              undo last game
+              life counter
             </button>
             <button
-              onClick={clearAll}
+              onClick={() => setActiveTab('victory')}
               style={{
-                padding: '10px 12px',
-                border: '1px solid #999',
-                background: '#fff',
+                flex: 1,
+                padding: '15px',
+                border: 'none',
+                background: activeTab === 'victory' ? '#000' : '#fff',
+                color: activeTab === 'victory' ? '#fff' : '#666',
                 cursor: 'pointer',
-                fontSize: '11px',
-                fontWeight: 'normal',
-                color: '#666',
+                fontSize: '13px',
+                fontWeight: activeTab === 'victory' ? 'bold' : 'normal',
                 fontFamily: 'inherit',
-                textTransform: 'lowercase'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = '#666';
-                e.target.style.borderColor = '#666';
-                e.target.style.color = '#fff';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = '#fff';
-                e.target.style.borderColor = '#999';
-                e.target.style.color = '#666';
+                textTransform: 'lowercase',
+                transition: 'all 0.2s ease'
               }}
             >
-              clear all data
+              victory counter
             </button>
           </div>
+
+          {/* Desktop Layout - Both sections side by side */}
+          <div className="desktop-layout">
+            {/* Life Counter Section - Mobile Optimized */}
+            <div className={`life-counter-section ${activeTab === 'life' ? 'active' : ''}`}>
+              {/* Mobile Full-Screen Vertical Split Layout */}
+              <div className="mobile-life-container" style={{
+                border: '1px solid #000',
+                padding: '20px 15px',
+                background: '#fff'
+              }}>
+                {/* Dome (Top - Rotated 180°) */}
+                <div className="mobile-player-section mobile-player-top">
+                  <div className="mobile-player-name">dome</div>
+                  <div className="mobile-life-display">{domeLife}</div>
+                  <div className="mobile-button-row">
+                    <button
+                      onMouseDown={() => handleMouseDown('dome', 'down')}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        handleMouseDown('dome', 'down');
+                      }}
+                      onTouchEnd={handleMouseUp}
+                      className="mobile-life-button"
+                    >
+                      -
+                    </button>
+                    <button
+                      onMouseDown={() => handleMouseDown('dome', 'up')}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        handleMouseDown('dome', 'up');
+                      }}
+                      onTouchEnd={handleMouseUp}
+                      className="mobile-life-button"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Center Menu Button */}
+                {!showCenterMenu && (
+                  <button
+                    onClick={() => setShowCenterMenu(true)}
+                    className="mobile-center-button"
+                  >
+                    ···
+                  </button>
+                )}
+
+                {/* Center Menu */}
+                {showCenterMenu && (
+                  <div className="mobile-center-menu">
+                    <button
+                      onClick={() => {
+                        setPolLife(20);
+                        setDomeLife(20);
+                        setShowCenterMenu(false);
+                      }}
+                      className="mobile-menu-button"
+                      style={{ fontSize: '16px' }}
+                    >
+                      <span style={{ fontSize: '20px' }}>↻</span> reset life
+                    </button>
+                    <button
+                      onClick={() => {
+                        throwDice();
+                        setShowCenterMenu(false);
+                      }}
+                      className="mobile-menu-button"
+                      style={{ fontSize: '16px' }}
+                    >
+                      <span style={{ fontSize: '20px' }}>⚅</span> throw d20
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveTab('victory');
+                        setShowCenterMenu(false);
+                      }}
+                      className="mobile-menu-button"
+                    >
+                      ★ victory counter
+                    </button>
+                    <button
+                      onClick={() => handleConcede('pol')}
+                      className="mobile-menu-button danger"
+                    >
+                      pol concedes
+                    </button>
+                    <button
+                      onClick={() => handleConcede('dome')}
+                      className="mobile-menu-button danger"
+                    >
+                      dome concedes
+                    </button>
+                    <button
+                      onClick={() => setShowCenterMenu(false)}
+                      className="mobile-menu-button"
+                    >
+                      × close
+                    </button>
+                  </div>
+                )}
+
+                {/* Dice Result Overlay */}
+                {diceResult && (
+                  <div className="dice-result-overlay">
+                    {diceResult}
+                  </div>
+                )}
+
+                {/* Victory Message Banner */}
+                {victoryMessage && (
+                  <div className="victory-message-banner">
+                    {victoryMessage}
+                  </div>
+                )}
+
+                {/* Pol (Bottom) */}
+                <div className="mobile-player-section mobile-player-bottom">
+                  <div className="mobile-player-name">pol</div>
+                  <div className="mobile-life-display">{polLife}</div>
+                  <div className="mobile-button-row">
+                    <button
+                      onMouseDown={() => handleMouseDown('pol', 'down')}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        handleMouseDown('pol', 'down');
+                      }}
+                      onTouchEnd={handleMouseUp}
+                      className="mobile-life-button"
+                    >
+                      -
+                    </button>
+                    <button
+                      onMouseDown={() => handleMouseDown('pol', 'up')}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        handleMouseDown('pol', 'up');
+                      }}
+                      onTouchEnd={handleMouseUp}
+                      className="mobile-life-button"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Victory Counter Section */}
+            <div className={`victory-counter-section ${activeTab === 'victory' ? 'active' : ''}`} style={{
+              border: '1px solid #000',
+              padding: '15px',
+              background: '#fff'
+            }}>
+              {/* Series Mode Selector */}
+              <div style={{
+                border: '1px solid #000',
+                padding: '12px 10px',
+                marginBottom: '15px',
+                background: seriesMode !== 'casual' ? 'rgba(0, 0, 0, 0.05)' : '#fff'
+              }}>
+                <h3 style={{
+                  fontSize: '12px',
+                  fontWeight: 'normal',
+                  marginBottom: '8px',
+                  textTransform: 'lowercase'
+                }}>
+                  game mode
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr 1fr',
+                  gap: '8px',
+                  marginBottom: seriesMode !== 'casual' ? '10px' : '0'
+                }}>
+                  <button
+                    onClick={() => startSeries('casual')}
+                    disabled={seriesMode === 'casual'}
+                    style={{
+                      padding: '10px 8px',
+                      border: seriesMode === 'casual' ? '2px solid #000' : '1px solid #999',
+                      background: seriesMode === 'casual' ? '#000' : '#fff',
+                      color: seriesMode === 'casual' ? '#fff' : '#666',
+                      cursor: seriesMode === 'casual' ? 'default' : 'pointer',
+                      fontSize: '11px',
+                      fontWeight: seriesMode === 'casual' ? 'bold' : 'normal',
+                      fontFamily: 'inherit',
+                      textTransform: 'lowercase'
+                    }}
+                  >
+                    casual
+                  </button>
+                  <button
+                    onClick={() => startSeries('bo3')}
+                    disabled={seriesMode === 'bo3'}
+                    style={{
+                      padding: '10px 8px',
+                      border: seriesMode === 'bo3' ? '2px solid #000' : '1px solid #999',
+                      background: seriesMode === 'bo3' ? '#000' : '#fff',
+                      color: seriesMode === 'bo3' ? '#fff' : '#666',
+                      cursor: seriesMode === 'bo3' ? 'default' : 'pointer',
+                      fontSize: '11px',
+                      fontWeight: seriesMode === 'bo3' ? 'bold' : 'normal',
+                      fontFamily: 'inherit',
+                      textTransform: 'lowercase'
+                    }}
+                  >
+                    best of 3
+                  </button>
+                  <button
+                    onClick={() => startSeries('bo5')}
+                    disabled={seriesMode === 'bo5'}
+                    style={{
+                      padding: '10px 8px',
+                      border: seriesMode === 'bo5' ? '2px solid #000' : '1px solid #999',
+                      background: seriesMode === 'bo5' ? '#000' : '#fff',
+                      color: seriesMode === 'bo5' ? '#fff' : '#666',
+                      cursor: seriesMode === 'bo5' ? 'default' : 'pointer',
+                      fontSize: '11px',
+                      fontWeight: seriesMode === 'bo5' ? 'bold' : 'normal',
+                      fontFamily: 'inherit',
+                      textTransform: 'lowercase'
+                    }}
+                  >
+                    best of 5
+                  </button>
+                </div>
+                {seriesMode !== 'casual' && (
+                  <div style={{
+                    padding: '10px',
+                    background: '#fff',
+                    border: '1px solid #000',
+                    textAlign: 'center'
+                  }}>
+                    <p style={{ fontSize: '11px', marginBottom: '5px', color: '#666' }}>
+                      current series: {seriesMode === 'bo3' ? 'best of 3' : 'best of 5'}
+                    </p>
+                    <p style={{ fontSize: '18px', fontWeight: 'normal' }}>
+                      pol {currentSeriesScore.pol} - {currentSeriesScore.dome} dome
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Global Stats */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '10px',
+                marginBottom: '15px'
+              }}>
+                <div
+                  onClick={() => recordVictory('Pol')}
+                  style={{
+                    border: '2px solid #000',
+                    padding: '15px 10px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    background: '#fff'
+                  }}
+                >
+                  <h2 style={{ fontSize: '12px', fontWeight: 'normal', marginBottom: '8px', textTransform: 'lowercase' }}>pol</h2>
+                  <div style={{ fontSize: '32px', fontWeight: 'bold', margin: '5px 0' }}>
+                    {polTotal}
+                  </div>
+                  <p style={{ fontSize: '11px', color: '#666', marginBottom: '6px', textTransform: 'lowercase' }}>total games</p>
+                  {(polBo3 > 0 || domeBo3 > 0 || polBo5 > 0 || domeBo5 > 0) && (
+                    <div style={{ fontSize: '10px', color: '#999', lineHeight: '1.4' }}>
+                      {(polBo3 > 0 || domeBo3 > 0) && <div>bo3: {polBo3}</div>}
+                      {(polBo5 > 0 || domeBo5 > 0) && <div>bo5: {polBo5}</div>}
+                    </div>
+                  )}
+                </div>
+                <div
+                  onClick={() => recordVictory('Dome')}
+                  style={{
+                    border: '2px solid #000',
+                    padding: '15px 10px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    background: '#fff'
+                  }}
+                >
+                  <h2 style={{ fontSize: '12px', fontWeight: 'normal', marginBottom: '8px', textTransform: 'lowercase' }}>dome</h2>
+                  <div style={{ fontSize: '32px', fontWeight: 'bold', margin: '5px 0' }}>
+                    {domeTotal}
+                  </div>
+                  <p style={{ fontSize: '11px', color: '#666', marginBottom: '6px', textTransform: 'lowercase' }}>total games</p>
+                  {(polBo3 > 0 || domeBo3 > 0 || polBo5 > 0 || domeBo5 > 0) && (
+                    <div style={{ fontSize: '10px', color: '#999', lineHeight: '1.4' }}>
+                      {(polBo3 > 0 || domeBo3 > 0) && <div>bo3: {domeBo3}</div>}
+                      {(polBo5 > 0 || domeBo5 > 0) && <div>bo5: {domeBo5}</div>}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Session Info */}
+              <div style={{
+                border: '1px solid #000',
+                padding: '12px 10px',
+                marginBottom: '15px',
+                background: 'rgba(0, 0, 0, 0.02)'
+              }}>
+                <p style={{ fontSize: '12px', lineHeight: '1.5', marginBottom: '5px' }}>
+                  {sessionInfo.lastWinner}
+                </p>
+                {sessionInfo.nextStarter && (
+                  <p style={{ fontSize: '12px', lineHeight: '1.5', marginBottom: '5px' }}>
+                    next: {sessionInfo.nextStarter}
+                  </p>
+                )}
+                {sessionInfo.todayLeader && (
+                  <p style={{ fontSize: '12px', lineHeight: '1.5', marginBottom: '5px' }}>
+                    leader: {sessionInfo.todayLeader}
+                  </p>
+                )}
+                {sessionInfo.specialMessage && (
+                  <p style={{
+                    fontSize: '12px',
+                    lineHeight: '1.5',
+                    marginTop: '8px',
+                    padding: '8px',
+                    background: '#fff',
+                    border: '1px solid #000',
+                    textAlign: 'center'
+                  }}>
+                    {sessionInfo.specialMessage}
+                  </p>
+                )}
+              </div>
+
+              {/* Today's Game Log */}
+              <div style={{
+                border: '1px solid #000',
+                padding: '12px 10px',
+                marginBottom: '15px',
+                maxHeight: '300px',
+                overflowY: 'auto',
+                background: '#fff'
+              }}>
+                <h3 style={{
+                  fontSize: '12px',
+                  fontWeight: 'normal',
+                  marginBottom: '8px',
+                  textTransform: 'lowercase'
+                }}>
+                  today's games
+                </h3>
+                {todayGames.length === 0 ? (
+                  <div style={{
+                    textAlign: 'center',
+                    color: '#666',
+                    padding: '10px',
+                    fontSize: '11px',
+                    textTransform: 'lowercase'
+                  }}>
+                    no games today
+                  </div>
+                ) : (
+                  <div>
+                    {[...todayGames].reverse().map((game, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          padding: '6px 8px',
+                          borderBottom: index === todayGames.length - 1 ? 'none' : '1px solid #eee',
+                          fontSize: '11px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <span style={{ textTransform: 'lowercase' }}>
+                          {game.winner.toLowerCase()} won
+                          {index === 0 ? ' (recent)' : ''}
+                        </span>
+                        <span style={{ color: '#666', fontSize: '10px' }}>{game.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Danger Zone */}
+              <div style={{
+                paddingTop: '10px',
+                borderTop: '1px solid #000'
+              }}>
+                <h3 style={{
+                  fontSize: '12px',
+                  fontWeight: 'normal',
+                  marginBottom: '8px',
+                  color: '#666',
+                  textTransform: 'lowercase'
+                }}>
+                  danger zone
+                </h3>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '8px'
+                }}>
+                  <button
+                    onClick={undoLastGame}
+                    style={{
+                      padding: '10px 12px',
+                      border: '1px solid #999',
+                      background: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      fontWeight: 'normal',
+                      color: '#666',
+                      fontFamily: 'inherit',
+                      textTransform: 'lowercase'
+                    }}
+                  >
+                    undo last game
+                  </button>
+                  <button
+                    onClick={clearAll}
+                    style={{
+                      padding: '10px 12px',
+                      border: '1px solid #999',
+                      background: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      fontWeight: 'normal',
+                      color: '#666',
+                      fontFamily: 'inherit',
+                      textTransform: 'lowercase'
+                    }}
+                  >
+                    clear all data
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+    </>
   );
 };
 
