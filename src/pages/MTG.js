@@ -20,6 +20,11 @@ const MTG = () => {
   const [showCenterMenu, setShowCenterMenu] = useState(false);
   const [diceResult, setDiceResult] = useState(null);
   const [victoryMessage, setVictoryMessage] = useState(null);
+  const [showStarterIcon, setShowStarterIcon] = useState(true);
+  const [showPolLifeLost, setShowPolLifeLost] = useState(false);
+  const [showDomeLifeLost, setShowDomeLifeLost] = useState(false);
+  const [polLifeChange, setPolLifeChange] = useState(0);
+  const [domeLifeChange, setDomeLifeChange] = useState(0);
 
   const holdIntervalRef = useRef(null);
   const holdTimeoutRef = useRef(null);
@@ -27,6 +32,10 @@ const MTG = () => {
   const previousPolLifeRef = useRef(20);
   const previousDomeLifeRef = useRef(20);
   const hasChangedLifeRef = useRef(false);
+  const polLifeLostTimeoutRef = useRef(null);
+  const domeLifeLostTimeoutRef = useRef(null);
+  const polLifeSnapshotRef = useRef(20);
+  const domeLifeSnapshotRef = useRef(20);
 
   const mtgRef = ref(database, 'mtg');
 
@@ -128,8 +137,52 @@ const MTG = () => {
   }, []);
 
   useEffect(() => {
+    // Hide starter icon when any life changes from initial 20
+    if ((polLife !== 20 || domeLife !== 20) && showStarterIcon) {
+      setShowStarterIcon(false);
+    }
+
     if (showingVictoryDialogRef.current) {
       return;
+    }
+
+    // Show life change indicators when life changes
+    if (polLife !== previousPolLifeRef.current) {
+      // If indicator is not showing, take a new snapshot
+      if (!showPolLifeLost) {
+        polLifeSnapshotRef.current = previousPolLifeRef.current;
+      }
+      
+      const change = polLife - polLifeSnapshotRef.current;
+      setPolLifeChange(change);
+      setShowPolLifeLost(true);
+      
+      if (polLifeLostTimeoutRef.current) {
+        clearTimeout(polLifeLostTimeoutRef.current);
+      }
+      polLifeLostTimeoutRef.current = setTimeout(() => {
+        setShowPolLifeLost(false);
+        polLifeSnapshotRef.current = polLife;
+      }, 1500);
+    }
+
+    if (domeLife !== previousDomeLifeRef.current) {
+      // If indicator is not showing, take a new snapshot
+      if (!showDomeLifeLost) {
+        domeLifeSnapshotRef.current = previousDomeLifeRef.current;
+      }
+      
+      const change = domeLife - domeLifeSnapshotRef.current;
+      setDomeLifeChange(change);
+      setShowDomeLifeLost(true);
+      
+      if (domeLifeLostTimeoutRef.current) {
+        clearTimeout(domeLifeLostTimeoutRef.current);
+      }
+      domeLifeLostTimeoutRef.current = setTimeout(() => {
+        setShowDomeLifeLost(false);
+        domeLifeSnapshotRef.current = domeLife;
+      }, 1500);
     }
 
     let winner = null;
@@ -161,6 +214,7 @@ const MTG = () => {
         } else {
           setPolLife(20);
           setDomeLife(20);
+          setShowStarterIcon(true); // Reset starter icon when resetting life
         }
         showingVictoryDialogRef.current = false;
       }, 200);
@@ -191,6 +245,7 @@ const MTG = () => {
     try {
       setPolLife(20);
       setDomeLife(20);
+      setShowStarterIcon(true); // Reset starter icon when recording victory
       
       const snapshot = await get(mtgRef);
       let data = snapshot.val() || {
@@ -740,6 +795,18 @@ const MTG = () => {
             line-height: 1 !important;
             margin: 20px 0 !important;
             user-select: none !important;
+            position: relative !important;
+          }
+
+          .life-lost-indicator {
+            position: absolute !important;
+            right: -80px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            font-size: 40px !important;
+            color: #999 !important;
+            font-weight: bold !important;
+            user-select: none !important;
           }
 
           .mobile-player-name {
@@ -753,6 +820,42 @@ const MTG = () => {
             user-select: none !important;
             opacity: 0.4 !important;
             letter-spacing: 2px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+          }
+
+          .starter-icon {
+            font-size: 20px !important;
+            user-select: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 20px !important;
+            min-width: 20px !important;
+            flex-shrink: 0 !important;
+            transition: opacity 0.3s ease !important;
+          }
+
+          .starter-icon.visible {
+            animation: starterPulse 2s ease-in-out infinite !important;
+            opacity: 1 !important;
+          }
+
+          .starter-icon.hidden {
+            opacity: 0 !important;
+            animation: none !important;
+          }
+
+          @keyframes starterPulse {
+            0%, 100% {
+              opacity: 0.6;
+              transform: scale(1);
+            }
+            50% {
+              opacity: 1;
+              transform: scale(1.1);
+            }
           }
 
           .mobile-button-row {
@@ -1017,8 +1120,18 @@ const MTG = () => {
               }}>
                 {/* Dome (Top - Rotated 180°) */}
                 <div className="mobile-player-section mobile-player-top">
-                  <div className="mobile-player-name">dome</div>
-                  <div className="mobile-life-display">{domeLife}</div>
+                  <div className="mobile-player-name">
+                    dome
+                    <span className={`starter-icon ${showStarterIcon && sessionInfo.nextStarter === 'dome' ? 'visible' : 'hidden'}`}>⚑</span>
+                  </div>
+                  <div className="mobile-life-display">
+                    {domeLife}
+                    {showDomeLifeLost && (
+                      <span className="life-lost-indicator">
+                        {domeLifeChange > 0 ? '+' : ''}{domeLifeChange}
+                      </span>
+                    )}
+                  </div>
                   <div className="mobile-button-row">
                     <button
                       onMouseDown={() => handleMouseDown('dome', 'down')}
@@ -1081,11 +1194,26 @@ const MTG = () => {
 
                 {/* Center Menu */}
                 {showCenterMenu && (
-                  <div className="mobile-center-menu">
+                  <>
+                    {/* Backdrop overlay */}
+                    <div
+                      onClick={() => setShowCenterMenu(false)}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 100,
+                        background: 'transparent'
+                      }}
+                    />
+                    <div className="mobile-center-menu">
                     <button
                       onClick={() => {
                         setPolLife(20);
                         setDomeLife(20);
+                        setShowStarterIcon(true); // Reset starter icon when resetting life
                         setShowCenterMenu(false);
                       }}
                       className="mobile-menu-button"
@@ -1131,6 +1259,7 @@ const MTG = () => {
                       × close
                     </button>
                   </div>
+                  </>
                 )}
 
                 {/* Dice Result Overlay */}
@@ -1149,8 +1278,18 @@ const MTG = () => {
 
                 {/* Pol (Bottom) */}
                 <div className="mobile-player-section mobile-player-bottom">
-                  <div className="mobile-player-name">pol</div>
-                  <div className="mobile-life-display">{polLife}</div>
+                  <div className="mobile-player-name">
+                    pol
+                    <span className={`starter-icon ${showStarterIcon && sessionInfo.nextStarter === 'pol' ? 'visible' : 'hidden'}`}>⚑</span>
+                  </div>
+                  <div className="mobile-life-display">
+                    {polLife}
+                    {showPolLifeLost && (
+                      <span className="life-lost-indicator">
+                        {polLifeChange > 0 ? '+' : ''}{polLifeChange}
+                      </span>
+                    )}
+                  </div>
                   <div className="mobile-button-row">
                     <button
                       onMouseDown={() => handleMouseDown('pol', 'down')}
