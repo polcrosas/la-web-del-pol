@@ -1026,9 +1026,19 @@ const MTG = () => {
                       onMouseLeave={handleMouseUp}
                       onTouchStart={(e) => {
                         e.preventDefault();
+                        e.stopPropagation();
                         handleMouseDown('dome', 'down');
                       }}
-                      onTouchEnd={handleMouseUp}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleMouseUp();
+                      }}
+                      onTouchCancel={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleMouseUp();
+                      }}
                       className="mobile-life-button"
                     >
                       -
@@ -1039,9 +1049,19 @@ const MTG = () => {
                       onMouseLeave={handleMouseUp}
                       onTouchStart={(e) => {
                         e.preventDefault();
+                        e.stopPropagation();
                         handleMouseDown('dome', 'up');
                       }}
-                      onTouchEnd={handleMouseUp}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleMouseUp();
+                      }}
+                      onTouchCancel={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleMouseUp();
+                      }}
                       className="mobile-life-button"
                     >
                       +
@@ -1138,9 +1158,19 @@ const MTG = () => {
                       onMouseLeave={handleMouseUp}
                       onTouchStart={(e) => {
                         e.preventDefault();
+                        e.stopPropagation();
                         handleMouseDown('pol', 'down');
                       }}
-                      onTouchEnd={handleMouseUp}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleMouseUp();
+                      }}
+                      onTouchCancel={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleMouseUp();
+                      }}
                       className="mobile-life-button"
                     >
                       -
@@ -1151,9 +1181,19 @@ const MTG = () => {
                       onMouseLeave={handleMouseUp}
                       onTouchStart={(e) => {
                         e.preventDefault();
+                        e.stopPropagation();
                         handleMouseDown('pol', 'up');
                       }}
-                      onTouchEnd={handleMouseUp}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleMouseUp();
+                      }}
+                      onTouchCancel={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleMouseUp();
+                      }}
                       className="mobile-life-button"
                     >
                       +
