@@ -5,12 +5,6 @@ import { ref, onValue, set, get } from 'firebase/database';
 const MTG = () => {
   const [polTotal, setPolTotal] = useState(0);
   const [domeTotal, setDomeTotal] = useState(0);
-  const [polBo3, setPolBo3] = useState(0);
-  const [domeBo3, setDomeBo3] = useState(0);
-  const [polBo5, setPolBo5] = useState(0);
-  const [domeBo5, setDomeBo5] = useState(0);
-  const [seriesMode, setSeriesMode] = useState('casual');
-  const [currentSeriesScore, setCurrentSeriesScore] = useState({ pol: 0, dome: 0 });
   const [todayGames, setTodayGames] = useState([]);
   const [polLife, setPolLife] = useState(20);
   const [domeLife, setDomeLife] = useState(20);
@@ -82,12 +76,6 @@ const MTG = () => {
           data = {
             polTotal: 0,
             domeTotal: 0,
-            polBo3: 0,
-            domeBo3: 0,
-            polBo5: 0,
-            domeBo5: 0,
-            seriesMode: 'casual',
-            currentSeriesScore: { pol: 0, dome: 0 },
             lastGame: null,
             todayGames: [],
             lastDate: new Date().toDateString()
@@ -102,12 +90,6 @@ const MTG = () => {
 
         setPolTotal(data.polTotal || 0);
         setDomeTotal(data.domeTotal || 0);
-        setPolBo3(data.polBo3 || 0);
-        setDomeBo3(data.domeBo3 || 0);
-        setPolBo5(data.polBo5 || 0);
-        setDomeBo5(data.domeBo5 || 0);
-        setSeriesMode(data.seriesMode || 'casual');
-        setCurrentSeriesScore(data.currentSeriesScore || { pol: 0, dome: 0 });
         setTodayGames(data.todayGames || []);
         setLoading(false);
       } catch (err) {
@@ -209,7 +191,7 @@ const MTG = () => {
       }
 
       setTimeout(() => {
-        if (window.confirm(`${loser} reached 0 life. Record victory for ${winner}?`)) {
+        if (window.confirm(`${loser.toLowerCase()} reached 0 life. record victory for ${winner.toLowerCase()}?`)) {
           recordVictory(winner);
         } else {
           setPolLife(20);
@@ -224,23 +206,6 @@ const MTG = () => {
     previousDomeLifeRef.current = domeLife;
   }, [polLife, domeLife]);
 
-  const startSeries = async (mode) => {
-    try {
-      const snapshot = await get(mtgRef);
-      let data = snapshot.val() || {};
-      
-      data.seriesMode = mode;
-      data.currentSeriesScore = { pol: 0, dome: 0 };
-      
-      await set(mtgRef, data);
-      setSeriesMode(mode);
-      setCurrentSeriesScore({ pol: 0, dome: 0 });
-    } catch (err) {
-      setError('Failed to start series');
-      console.error(err);
-    }
-  };
-
   const recordVictory = async (winner) => {
     try {
       setPolLife(20);
@@ -251,12 +216,6 @@ const MTG = () => {
       let data = snapshot.val() || {
         polTotal: 0,
         domeTotal: 0,
-        polBo3: 0,
-        domeBo3: 0,
-        polBo5: 0,
-        domeBo5: 0,
-        seriesMode: 'casual',
-        currentSeriesScore: { pol: 0, dome: 0 },
         lastGame: null,
         todayGames: [],
         lastDate: new Date().toDateString()
@@ -268,87 +227,8 @@ const MTG = () => {
         data.domeTotal = (data.domeTotal || 0) + 1;
       }
 
-      const currentMode = data.seriesMode || 'casual';
-      const currentScore = data.currentSeriesScore || { pol: 0, dome: 0 };
-      
-      if (currentMode !== 'casual') {
-        if (winner === 'Pol') {
-          currentScore.pol += 1;
-        } else {
-          currentScore.dome += 1;
-        }
-        data.currentSeriesScore = currentScore;
-        
-        let seriesComplete = false;
-        let seriesWinner = null;
-        
-        if (currentMode === 'bo3' && (currentScore.pol === 2 || currentScore.dome === 2)) {
-          seriesComplete = true;
-          seriesWinner = currentScore.pol === 2 ? 'Pol' : 'Dome';
-          // Don't increment BO3 counter yet - wait to see if they extend to BO5
-        } else if (currentMode === 'bo5' && (currentScore.pol === 3 || currentScore.dome === 3)) {
-          seriesComplete = true;
-          seriesWinner = currentScore.pol === 3 ? 'Pol' : 'Dome';
-          if (seriesWinner === 'Pol') {
-            data.polBo5 = (data.polBo5 || 0) + 1;
-          } else {
-            data.domeBo5 = (data.domeBo5 || 0) + 1;
-          }
-        }
-        
-        if (seriesComplete) {
-          // Save data first
-          await set(mtgRef, data);
-          
-          // For bo3, offer to extend to bo5
-          if (currentMode === 'bo3') {
-            setTimeout(() => {
-              const extendToBo5 = window.confirm(
-                `${seriesWinner} wins the BO3 series ${currentScore.pol}-${currentScore.dome}!\n\nExtend to Best of 5?`
-              );
-              
-              if (extendToBo5) {
-                // Continue the series as bo5 - DON'T record BO3 win
-                get(mtgRef).then(snapshot => {
-                  let updatedData = snapshot.val();
-                  updatedData.seriesMode = 'bo5';
-                  // Keep the current score
-                  set(mtgRef, updatedData);
-                });
-              } else {
-                // Cancel expansion - NOW record the BO3 win
-                get(mtgRef).then(snapshot => {
-                  let updatedData = snapshot.val();
-                  // Record BO3 win
-                  if (seriesWinner === 'Pol') {
-                    updatedData.polBo3 = (updatedData.polBo3 || 0) + 1;
-                  } else {
-                    updatedData.domeBo3 = (updatedData.domeBo3 || 0) + 1;
-                  }
-                  // Reset to casual
-                  updatedData.seriesMode = 'casual';
-                  updatedData.currentSeriesScore = { pol: 0, dome: 0 };
-                  set(mtgRef, updatedData);
-                });
-              }
-            }, 100);
-          } else {
-            // For bo5, just reset to casual
-            data.seriesMode = 'casual';
-            data.currentSeriesScore = { pol: 0, dome: 0 };
-            await set(mtgRef, data);
-            
-            setTimeout(() => {
-              alert(`${seriesWinner} wins the BO5 series ${currentScore.pol}-${currentScore.dome}!`);
-            }, 100);
-          }
-          return; // Exit early since we're handling the save
-        }
-      }
-
       const game = {
         winner: winner,
-        seriesMode: currentMode,
         timestamp: new Date().toISOString(),
         time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
       };
@@ -496,23 +376,19 @@ const MTG = () => {
 
   const handleConcede = (player) => {
     const winner = player === 'pol' ? 'Dome' : 'Pol';
-    if (window.confirm(`${player} concedes. Record victory for ${winner}?`)) {
+    if (window.confirm(`${player} concedes. record victory for ${winner.toLowerCase()}?`)) {
       recordVictory(winner);
       setShowCenterMenu(false);
     }
   };
 
   const clearAll = async () => {
-    if (window.confirm('Clear ALL data? This will reset everything including total victories. This cannot be undone!')) {
-      if (window.confirm('Are you absolutely sure? This will delete all victory records permanently.')) {
+    if (window.confirm('clear all data? this will reset everything including total victories. this cannot be undone!')) {
+      if (window.confirm('are you absolutely sure? this will delete all victory records permanently.')) {
         try {
           await set(mtgRef, {
             polTotal: 0,
             domeTotal: 0,
-            polBo3: 0,
-            domeBo3: 0,
-            polBo5: 0,
-            domeBo5: 0,
             lastGame: null,
             todayGames: [],
             lastDate: new Date().toDateString()
@@ -527,11 +403,20 @@ const MTG = () => {
 
   const sessionInfo = useMemo(() => {
     if (todayGames.length === 0) {
+      const firstGameMessages = [
+        'time to shuffle up! (•̀ᴗ•́)و',
+        'first game of the day! ᕙ(⇀‸↼‶)ᕗ',
+        'let the games begin! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧',
+        'ready to battle? ᕦ(ò_óˇ)ᕤ',
+        'may the best mage win! (@_@)',
+        'draw your opening hand! (•̀ᴗ•́)و',
+        'time to tap some lands! ᕙ(⇀‸↼‶)ᕗ'
+      ];
       return {
         lastWinner: 'no games played yet today',
         nextStarter: '',
         todayLeader: '',
-        specialMessage: null
+        specialMessage: firstGameMessages[Math.floor(Math.random() * firstGameMessages.length)]
       };
     }
 
@@ -561,13 +446,12 @@ const MTG = () => {
       }
     }
 
-    // Check if a streak was just broken (previous game had a different winner)
+    // Check if a streak was just broken
     let brokenStreak = 0;
     let brokenStreakPlayer = null;
     if (todayGames.length >= 2) {
       const previousWinner = todayGames[todayGames.length - 2].winner;
       if (previousWinner !== lastGame.winner) {
-        // Count how long the previous streak was
         let streakCount = 1;
         for (let i = todayGames.length - 3; i >= 0; i--) {
           if (todayGames[i].winner === previousWinner) {
@@ -576,66 +460,115 @@ const MTG = () => {
             break;
           }
         }
-        if (streakCount >= 3) {
+        if (streakCount >= 2) {
           brokenStreak = streakCount;
           brokenStreakPlayer = previousWinner;
         }
       }
     }
 
-    // Generate context-aware message
+    // Generate context-aware messages with MORE variety and ASCII emojis!
     let specialMessage = null;
     
-    // Check if in a series (bo3 or bo5)
-    if (seriesMode === 'bo3' || seriesMode === 'bo5') {
-      const seriesName = seriesMode === 'bo3' ? 'best of 3' : 'best of 5';
-      const winTarget = seriesMode === 'bo3' ? 2 : 3;
-      const seriesPolWins = currentSeriesScore.pol;
-      const seriesDomeWins = currentSeriesScore.dome;
-      
-      if (seriesPolWins === winTarget - 1 && seriesDomeWins < winTarget - 1) {
-        specialMessage = `pol is one win away from taking the ${seriesName}! >:)`;
-      } else if (seriesDomeWins === winTarget - 1 && seriesPolWins < winTarget - 1) {
-        specialMessage = `dome is one win away from taking the ${seriesName}! >:)`;
-      } else if (seriesPolWins === seriesDomeWins) {
-        specialMessage = `${seriesName} is tied ${seriesPolWins}-${seriesDomeWins}! next game matters! (╯°□°)╯`;
-      } else {
-        const leader = seriesPolWins > seriesDomeWins ? 'pol' : 'dome';
-        specialMessage = `${leader} leads the ${seriesName} ${Math.max(seriesPolWins, seriesDomeWins)}-${Math.min(seriesPolWins, seriesDomeWins)}`;
-      }
-    }
-    // Streak break messages (highest priority in casual mode)
-    else if (brokenStreak > 0) {
+    // Streak break messages (highest priority)
+    if (brokenStreak >= 5) {
+      const messages = [
+        `WOAH! ${lastGame.winner.toLowerCase()} breaks ${brokenStreakPlayer.toLowerCase()}'s ${brokenStreak} game streak! \\(o_o)/`,
+        `STREAK BREAKER! ${lastGame.winner.toLowerCase()} ends ${brokenStreakPlayer.toLowerCase()}'s ${brokenStreak} win domination! (x_x)`,
+        `${brokenStreakPlayer.toLowerCase()}'s ${brokenStreak} game streak is OVER! comeback time! ᕙ(⇀‸↼‶)ᕗ`,
+        `${lastGame.winner.toLowerCase()} finally breaks through after ${brokenStreak} losses! ᕦ(ò_óˇ)ᕤ`,
+        `THE STREAK IS BROKEN! ${lastGame.winner.toLowerCase()} ends ${brokenStreak} straight losses! (@_@)`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    } else if (brokenStreak >= 3) {
       const messages = [
         `${lastGame.winner.toLowerCase()} breaks ${brokenStreakPlayer.toLowerCase()}'s ${brokenStreak} game streak! \\(o_o)/`,
-        `streak breaker! ${lastGame.winner.toLowerCase()} ends ${brokenStreakPlayer.toLowerCase()}'s ${brokenStreak} win run! (x_x)`,
-        `${brokenStreakPlayer.toLowerCase()}'s ${brokenStreak} game streak is over! ${lastGame.winner.toLowerCase()} strikes back! ᕙ(⇀‸↼‶)ᕗ`
+        `streak breaker! ${lastGame.winner.toLowerCase()} ends the ${brokenStreak} win run! (•̀ᴗ•́)و`,
+        `${brokenStreakPlayer.toLowerCase()}'s ${brokenStreak} streak is over! ${lastGame.winner.toLowerCase()} strikes back! ᕙ(⇀‸↼‶)ᕗ`,
+        `${lastGame.winner.toLowerCase()} stops the bleeding! ${brokenStreak} game streak ended! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    } else if (brokenStreak === 2) {
+      const messages = [
+        `${lastGame.winner.toLowerCase()} stops the streak! back and forth! (•̀ᴗ•́)و`,
+        `no easy wins here! ${lastGame.winner.toLowerCase()} fights back! ᕙ(⇀‸↼‶)ᕗ`,
+        `${lastGame.winner.toLowerCase()} evens things up! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧`,
+        `${lastGame.winner.toLowerCase()} bounces back! ᕦ(ò_óˇ)ᕤ`
       ];
       specialMessage = messages[Math.floor(Math.random() * messages.length)];
     }
-    // Active streak messages for casual games
-    else if (currentStreak >= 3) {
+    // Active long streak messages
+    else if (currentStreak >= 7) {
+      const messages = [
+        `${streakPlayer.toLowerCase()} is UNSTOPPABLE! ${currentStreak} wins in a row! ᕙ(⇀‸↼‶)ᕗ`,
+        `${currentStreak} STRAIGHT WINS for ${streakPlayer.toLowerCase()}! absolute domination! ᕦ(ò_óˇ)ᕤ`,
+        `${streakPlayer.toLowerCase()} on a ${currentStreak} game rampage! can anyone stop them?! (@_@)`,
+        `${currentStreak} in a row! ${streakPlayer.toLowerCase()} is in the ZONE! (•̀ᴗ•́)و`,
+        `${streakPlayer.toLowerCase()} with ${currentStreak} straight! legendary run! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    else if (currentStreak >= 4) {
       const messages = [
         `${streakPlayer.toLowerCase()} is on fire! ${currentStreak} wins in a row! ᕙ(⇀‸↼‶)ᕗ`,
         `${currentStreak} game streak for ${streakPlayer.toLowerCase()}! unstoppable! (•̀ᴗ•́)و`,
-        `${streakPlayer.toLowerCase()} dominating with ${currentStreak} straight wins! ᕦ(ò_óˇ)ᕤ`
+        `${streakPlayer.toLowerCase()} dominating with ${currentStreak} straight wins! ᕦ(ò_óˇ)ᕤ`,
+        `${currentStreak} in a row! ${streakPlayer.toLowerCase()} can't be stopped! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧`,
+        `${streakPlayer.toLowerCase()} rolling with ${currentStreak} straight! (@_@)`
       ];
       specialMessage = messages[Math.floor(Math.random() * messages.length)];
     }
-    // Close score messages
-    else if (Math.abs(polWins - domeWins) === 0 && todayGames.length >= 2) {
+    else if (currentStreak === 3) {
+      const messages = [
+        `${streakPlayer.toLowerCase()} with 3 in a row! hat trick! ᕙ(⇀‸↼‶)ᕗ`,
+        `triple win streak for ${streakPlayer.toLowerCase()}! (•̀ᴗ•́)و`,
+        `${streakPlayer.toLowerCase()} heating up! 3 straight! ᕦ(ò_óˇ)ᕤ`,
+        `3 in a row for ${streakPlayer.toLowerCase()}! on a roll! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    else if (currentStreak === 2) {
+      const messages = [
+        `${streakPlayer.toLowerCase()} wins again! 2 in a row! (•̀ᴗ•́)و`,
+        `back to back for ${streakPlayer.toLowerCase()}! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧`,
+        `${streakPlayer.toLowerCase()} building momentum! ᕙ(⇀‸↼‶)ᕗ`,
+        `double trouble! ${streakPlayer.toLowerCase()} with 2! ᕦ(ò_óˇ)ᕤ`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    // Perfect tie messages
+    else if (polWins === domeWins && todayGames.length >= 4) {
       const messages = [
         `perfectly balanced! ${polWins}-${domeWins} (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧`,
         `dead even at ${polWins}-${domeWins}! who will break the tie? (o_O)`,
-        `tied ${polWins}-${domeWins}! the tension! (@_@)`
+        `tied ${polWins}-${domeWins}! the tension is real! (@_@)`,
+        `${polWins}-${domeWins}! couldn't be closer! (•̀ᴗ•́)و`,
+        `neck and neck at ${polWins}-${domeWins}! ᕙ(⇀‸↼‶)ᕗ`
       ];
       specialMessage = messages[Math.floor(Math.random() * messages.length)];
     }
     // One-sided matches
     else if (todayGames.length >= 3 && (polWins === 0 || domeWins === 0)) {
-      const winningPlayer = polWins > 0 ? 'pol' : 'dome';
       const losingPlayer = polWins > 0 ? 'dome' : 'pol';
-      specialMessage = `${losingPlayer} still looking for their first win today... (╥_╥)`;
+      const winningPlayer = polWins > 0 ? 'pol' : 'dome';
+      const messages = [
+        `${losingPlayer} still looking for their first win today... (╥_╥)`,
+        `${winningPlayer} undefeated today! ${losingPlayer} needs a win! (@_@)`,
+        `${losingPlayer} winless so far... time for a comeback! (•̀ᴗ•́)و`,
+        `${winningPlayer} perfect today! can ${losingPlayer} break through? (o_O)`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
+    }
+    // Close games (within 1)
+    else if (Math.abs(polWins - domeWins) === 1 && todayGames.length >= 3) {
+      const leader = polWins > domeWins ? 'pol' : 'dome';
+      const messages = [
+        `${leader} up by one! super close! (•̀ᴗ•́)و`,
+        `tight match! ${leader} barely ahead! (@_@)`,
+        `${leader} leads by a hair! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧`,
+        `anyone's game! ${leader} up by 1! ᕙ(⇀‸↼‶)ᕗ`
+      ];
+      specialMessage = messages[Math.floor(Math.random() * messages.length)];
     }
     // Default encouraging messages
     else {
@@ -643,7 +576,10 @@ const MTG = () => {
         `good luck ${nextStarter}! (•̀ᴗ•́)و`,
         `your turn ${nextStarter}! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧`,
         `${nextStarter} starts! ᕙ(⇀‸↼‶)ᕗ`,
-        `let's go ${nextStarter}! ᕦ(ò_óˇ)ᕤ`
+        `let's go ${nextStarter}! ᕦ(ò_óˇ)ᕤ`,
+        `${nextStarter}'s game to start! (@_@)`,
+        `ready ${nextStarter}? shuffle up! (•̀ᴗ•́)و`,
+        `${nextStarter} begins! good luck! (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧`
       ];
       specialMessage = messages[Math.floor(Math.random() * messages.length)];
     }
@@ -654,7 +590,7 @@ const MTG = () => {
       todayLeader: todayLeader,
       specialMessage: specialMessage
     };
-  }, [todayGames, seriesMode, currentSeriesScore]);
+  }, [todayGames]);
 
   if (loading) {
     return (
@@ -1348,96 +1284,6 @@ const MTG = () => {
               padding: '15px',
               background: '#fff'
             }}>
-              {/* Series Mode Selector */}
-              <div style={{
-                border: '1px solid #000',
-                padding: '12px 10px',
-                marginBottom: '15px',
-                background: seriesMode !== 'casual' ? 'rgba(0, 0, 0, 0.05)' : '#fff'
-              }}>
-                <h3 style={{
-                  fontSize: '12px',
-                  fontWeight: 'normal',
-                  marginBottom: '8px',
-                  textTransform: 'lowercase'
-                }}>
-                  game mode
-                </h3>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr 1fr',
-                  gap: '8px',
-                  marginBottom: seriesMode !== 'casual' ? '10px' : '0'
-                }}>
-                  <button
-                    onClick={() => startSeries('casual')}
-                    disabled={seriesMode === 'casual'}
-                    style={{
-                      padding: '10px 8px',
-                      border: seriesMode === 'casual' ? '2px solid #000' : '1px solid #999',
-                      background: seriesMode === 'casual' ? '#000' : '#fff',
-                      color: seriesMode === 'casual' ? '#fff' : '#666',
-                      cursor: seriesMode === 'casual' ? 'default' : 'pointer',
-                      fontSize: '11px',
-                      fontWeight: seriesMode === 'casual' ? 'bold' : 'normal',
-                      fontFamily: 'inherit',
-                      textTransform: 'lowercase'
-                    }}
-                  >
-                    casual
-                  </button>
-                  <button
-                    onClick={() => startSeries('bo3')}
-                    disabled={seriesMode === 'bo3'}
-                    style={{
-                      padding: '10px 8px',
-                      border: seriesMode === 'bo3' ? '2px solid #000' : '1px solid #999',
-                      background: seriesMode === 'bo3' ? '#000' : '#fff',
-                      color: seriesMode === 'bo3' ? '#fff' : '#666',
-                      cursor: seriesMode === 'bo3' ? 'default' : 'pointer',
-                      fontSize: '11px',
-                      fontWeight: seriesMode === 'bo3' ? 'bold' : 'normal',
-                      fontFamily: 'inherit',
-                      textTransform: 'lowercase'
-                    }}
-                  >
-                    best of 3
-                  </button>
-                  <button
-                    onClick={() => startSeries('bo5')}
-                    disabled={seriesMode === 'bo5'}
-                    style={{
-                      padding: '10px 8px',
-                      border: seriesMode === 'bo5' ? '2px solid #000' : '1px solid #999',
-                      background: seriesMode === 'bo5' ? '#000' : '#fff',
-                      color: seriesMode === 'bo5' ? '#fff' : '#666',
-                      cursor: seriesMode === 'bo5' ? 'default' : 'pointer',
-                      fontSize: '11px',
-                      fontWeight: seriesMode === 'bo5' ? 'bold' : 'normal',
-                      fontFamily: 'inherit',
-                      textTransform: 'lowercase'
-                    }}
-                  >
-                    best of 5
-                  </button>
-                </div>
-                {seriesMode !== 'casual' && (
-                  <div style={{
-                    padding: '10px',
-                    background: '#fff',
-                    border: '1px solid #000',
-                    textAlign: 'center'
-                  }}>
-                    <p style={{ fontSize: '11px', marginBottom: '5px', color: '#666' }}>
-                      current series: {seriesMode === 'bo3' ? 'best of 3' : 'best of 5'}
-                    </p>
-                    <p style={{ fontSize: '18px', fontWeight: 'normal' }}>
-                      pol {currentSeriesScore.pol} - {currentSeriesScore.dome} dome
-                    </p>
-                  </div>
-                )}
-              </div>
-
               {/* Global Stats */}
               <div style={{
                 display: 'grid',
@@ -1460,10 +1306,6 @@ const MTG = () => {
                     {polTotal}
                   </div>
                   <p style={{ fontSize: '11px', color: '#666', marginBottom: '6px', textTransform: 'lowercase' }}>total games</p>
-                  <div style={{ fontSize: '10px', color: '#999', lineHeight: '1.4' }}>
-                    {seriesMode === 'bo3' && (polBo3 > 0 || domeBo3 > 0) && <div>bo3: {polBo3}</div>}
-                    {seriesMode === 'bo5' && (polBo5 > 0 || domeBo5 > 0) && <div>bo5: {polBo5}</div>}
-                  </div>
                 </div>
                 <div
                   onClick={() => recordVictory('Dome')}
@@ -1480,10 +1322,6 @@ const MTG = () => {
                     {domeTotal}
                   </div>
                   <p style={{ fontSize: '11px', color: '#666', marginBottom: '6px', textTransform: 'lowercase' }}>total games</p>
-                  <div style={{ fontSize: '10px', color: '#999', lineHeight: '1.4' }}>
-                    {seriesMode === 'bo3' && (polBo3 > 0 || domeBo3 > 0) && <div>bo3: {domeBo3}</div>}
-                    {seriesMode === 'bo5' && (polBo5 > 0 || domeBo5 > 0) && <div>bo5: {domeBo5}</div>}
-                  </div>
                 </div>
               </div>
 
