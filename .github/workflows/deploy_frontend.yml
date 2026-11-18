@@ -44,4 +44,4 @@ jobs:
       - run: CI=false npm run build # --if-present
 
       - name: Push to S3 prod
-        run: aws s3 sync build/ s3://ponzi.cat
+        run: aws s3 sync build/ s3://polcrosas.com

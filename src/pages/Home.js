@@ -114,8 +114,9 @@ const Home = () => {
       image: 'https://cati-eclipse.s3.eu-west-2.amazonaws.com/mv.jpg',
       isExternal: false,
       content: {
+        image: 'https://cati-eclipse.s3.eu-west-2.amazonaws.com/IMG_9565.JPG',
         linksBelow: [
-          { text: 'download pdf', url: 'PLACEHOLDER_PDF_URL' },
+          { text: 'download pdf', url: 'https://cati-eclipse.s3.eu-west-2.amazonaws.com/mundoviolencia.pdf' },
           { text: 'purchase', url: 'https://fatbottombooks.com/es/books/illustration/mundo-violencia' }
         ]
       }
@@ -329,10 +330,13 @@ const Home = () => {
       image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat7.jpg',
       isExternal: false,
       content: {
+        image: 'https://cati-eclipse.s3.eu-west-2.amazonaws.com/as+Compressed.jpg',
+        noBrightness: true,
         linksBelow: [
           { text: 'download pdf', url: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/pol/pdfs/carglass.pdf' }
         ],
         text: '<p style="margin-bottom: 2px">here\'s a surprise secret music video:</p>',
+        smallVideo: true,
         videos: ['https://www.youtube.com/embed/iJq4iw4vjFc']
       }
     },
@@ -344,9 +348,14 @@ const Home = () => {
       description: 'els cundits fanzine',
       year: '2021',
       image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat8.jpg',
-      link: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/pol/pdfs/cundits.pdf',
-      isExternal: true,
-      buttonLabel: 'download pdf'
+      isExternal: false,
+      content: {
+        image: 'https://cati-eclipse.s3.eu-west-2.amazonaws.com/manga_3+Compressed.jpg',
+        noBrightness: true,
+        linksBelow: [
+          { text: 'download pdf', url: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/pol/pdfs/cundits.pdf' }
+        ]
+      }
     },
     {
       id: 'hiperpublicacion',
@@ -403,7 +412,6 @@ const Home = () => {
       content: {
         text: '<p style="line-height: 1.6; margin-bottom: 20px"><em>Et sic in infinitum,</em> is born in 1617 in the treatise <em>Utriusque cosmi maioris scilicet et minoris metaphysica, physica atque technica historia in duo volumina secundum cosmi differentiam divisa</em> by the English Rosicrucian physician, inventor, astrologer, urinomancer, geomancer, and metaphysician, Robert Fludd (1574-1637), whom we conjure as the guardian angel of this fanzine. On page 26 surrounded by four <em>et sic in infinitums,</em> we encounter a black square delineating a map of primordial matter or the primordial being before creation.</p>',
         links: [
-          { text: 'instagram', url: 'https://www.instagram.com/serbal.pntic.mec.es/' },
           { text: 'website', url: 'https://serbalpnticmec.wordpress.com' },
           { text: 'purchase', url: 'https://fatbottombooks.com/books/fanzine/serbalpnticmeces-et-sic-infinitum' }
         ],
@@ -842,18 +850,36 @@ const Home = () => {
                               </>
                             ) : (
                               <>
+                                {projects.find(p => p.id === openProject).content.image && (
+                                  <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                                    <img
+                                      src={projects.find(p => p.id === openProject).content.image}
+                                      alt={projects.find(p => p.id === openProject).title}
+                                      style={{ width: '100%', maxWidth: '900px', ...(projects.find(p => p.id === openProject).content.noBrightness ? {} : { filter: 'brightness(0.75)' }) }}
+                                    />
+                                  </div>
+                                )}
+
+                                {projects.find(p => p.id === openProject).content.linksBelow && (
+                                  <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                                    {projects.find(p => p.id === openProject).content.linksBelow.map((link, i) => (
+                                      <a
+                                        key={i}
+                                        href={link.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{ display: 'inline-block', padding: '10px 20px', border: '1px solid #000' }}
+                                      >
+                                        {link.text}
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
+
                                 {projects.find(p => p.id === openProject).content.text && (
-                                  <div style={{ marginBottom: '20px', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: projects.find(p => p.id === openProject).content.text }} />
+                                  <div style={{ marginBottom: '20px', lineHeight: '1.6', ...(projects.find(p => p.id === openProject).content.smallVideo ? { maxWidth: '480px', margin: '0 auto 20px' } : {}) }} dangerouslySetInnerHTML={{ __html: projects.find(p => p.id === openProject).content.text }} />
                                 )}
                             
-                                {projects.find(p => p.id === openProject).content.image && (
-                                  <img
-                                    src={projects.find(p => p.id === openProject).content.image}
-                                    alt={projects.find(p => p.id === openProject).title}
-                                    style={{ width: '100%', maxWidth: '600px', marginBottom: '20px' }}
-                                  />
-                                )}
-                                
                                 {projects.find(p => p.id === openProject).content.links && (
                                   <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                                     {projects.find(p => p.id === openProject).content.links.map((link, i) => (
@@ -887,6 +913,20 @@ const Home = () => {
                                 </div>
                               ))}
                             </div>
+                          ) : projects.find(p => p.id === openProject).content.smallVideo ? (
+                            <div style={{ maxWidth: '480px', margin: '0 auto' }}>
+                              {projects.find(p => p.id === openProject).content.videos.map((video, i) => (
+                                <div key={i} className="video-container">
+                                  <iframe
+                                    src={video}
+                                    title={`${projects.find(p => p.id === openProject).title} ${i + 1}`}
+                                    frameBorder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                  />
+                                </div>
+                              ))}
+                            </div>
                           ) : (
                             <div className="dropdown-videos">
                               {projects.find(p => p.id === openProject).content.videos.map((video, i) => (
@@ -904,22 +944,6 @@ const Home = () => {
                           )
                         )}
                         
-                        {projects.find(p => p.id === openProject).content.linksBelow && (
-                          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                            {projects.find(p => p.id === openProject).content.linksBelow.map((link, i) => (
-                              <a
-                                key={i}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ display: 'inline-block', padding: '10px 20px', border: '1px solid #000' }}
-                              >
-                                {link.text}
-                              </a>
-                            ))}
-                          </div>
-                        )}
-
                         {projects.find(p => p.id === openProject).content.text2 && (
                           <div style={{ marginBottom: '20px', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: projects.find(p => p.id === openProject).content.text2 }} />
                         )}

@@ -29,14 +29,6 @@ const Serbal = () => {
             </p>
             
             <div style={{ marginBottom: '20px' }}>
-              <a 
-                href="https://www.instagram.com/serbal.pntic.mec.es/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{ display: 'inline-block', padding: '10px 20px', border: '1px solid #000', marginRight: '10px', marginBottom: '10px' }}
-              >
-                instagram
-              </a>
               <a
                 href="https://serbalpnticmec.wordpress.com"
                 target="_blank"
