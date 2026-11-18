@@ -63,6 +63,11 @@ const TapetumLucidum = () => {
             <p style={{ lineHeight: '1.6', marginBottom: '20px' }}>
               <strong>1st of June of 2023, Elías Querejeta Zine Eskola. While showing him <em>tapetum lucidum</em>, Pol Crosas interviews Pedro Costa about the nature of artificial intelligence generated images and how they dialogue with contemporary cinema.</strong>
             </p>
+            <img
+              src="https://cati-eclipse.s3.eu-west-2.amazonaws.com/WhatsApp+Image+2026-11-13+at+12.08.27.jpeg"
+              alt="Pol Crosas interviews Pedro Costa at Elías Querejeta Zine Eskola"
+              style={{ width: '100%', marginBottom: '20px' }}
+            />
             <a
               href="https://majindonpatch-public.s3.eu-west-2.amazonaws.com/tapetum_lucidum/acabat_alta.pdf"
               target="_blank"
