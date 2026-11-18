@@ -326,7 +326,7 @@ const Home = () => {
     },
     {
       id: 'carglass',
-      title: 'carglass',
+      title: 'carglass 2',
       description: 'atractive_smithers fanzine',
       year: '2022',
       image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat7.jpg',
@@ -361,7 +361,7 @@ const Home = () => {
     },
     {
       id: 'hiperpublicacion',
-      title: 'hiperpublicación',
+      title: 'hiperpublicación 100/24',
       description: '24h nonstop publishing residency with eze',
       year: '2021',
       image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat5.jpg',
@@ -371,7 +371,7 @@ const Home = () => {
     },
     {
       id: 'vertical',
-      title: 'vertical',
+      title: "i'm vertical but i'd rather be horizontal",
       description: 'video poem with cameras and the sea',
       year: '2021',
       image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat15.jpg',
