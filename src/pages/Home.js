@@ -105,16 +105,47 @@ const Home = () => {
   }, []);
   
   const projects = [
+    // 2026
+    {
+      id: 'mundo_violencia',
+      title: 'mundo violencia',
+      description: "design of miguel noguera's fanzine",
+      year: '2026',
+      image: 'https://cati-eclipse.s3.eu-west-2.amazonaws.com/mv.jpg',
+      isExternal: false,
+      content: {
+        linksBelow: [
+          { text: 'download pdf', url: 'PLACEHOLDER_PDF_URL' },
+          { text: 'purchase', url: 'https://fatbottombooks.com/es/books/illustration/mundo-violencia' }
+        ]
+      }
+    },
+    {
+      id: 'thirst_for_annihilation',
+      title: 'thirst for annihilation',
+      description: 'archive footage experimental film with montenegro for BIVAC, CCCB',
+      year: '2026',
+      image: 'https://cati-eclipse.s3.eu-west-2.amazonaws.com/thirst.jpg',
+      isExternal: false,
+      content: {
+        videos: ['https://www.youtube.com/embed/Uzfeju7MuJ0'],
+        linksBelow: [
+          { text: 'go to cccb', url: 'https://www.cccb.org/es/w/actividades/bivac-2026' }
+        ]
+      }
+    },
+
     // 2025
     {
       id: 'capella',
       title: 'caca banal',
-      description: 'daniel moreno roldán exhibition with atractive_smithers in la capella',
+      description: 'daniel moreno roldán exhibition with atractive_smithers at La Capella',
       year: '2025',
       image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/capella/capella.jpg',
       link: 'https://www.lacapella.barcelona/es/programacion/exposiciones/caca-banal/',
       isExternal: true,
-      buttonLabel: 'go to la capella'
+      buttonLabel: 'go to la capella',
+      text: 'In the digital sphere, the term shitposting is used to describe a type of content that, at first glance, seems irrelevant and absurd. Memes, collages, original animations, crude renders, and extreme mashups of dubious value. Caca banal (Banal Crap) undertakes an exercise in digital archaeology that examines how certain trivial social media content goes far beyond the merely chaotic. The exhibition also explores its uses as a tool for social organization and activism, its absorption by the corporate world, and how this seemingly innocuous flow of information has largely shaped the ideological imaginary of various generations.'
     },
     
     // 2024
@@ -143,7 +174,7 @@ const Home = () => {
     {
       id: 'f',
       title: 'f. barranco, el regreso de la filoxera',
-      description: 'festival aftermovie with dome',
+      description: 'documentary of the last Barranco Fest with dome',
       year: '2024',
       image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat17.jpg',
       isExternal: false,
@@ -156,7 +187,7 @@ const Home = () => {
     {
       id: 'inout',
       title: 'inout',
-      description: 'final degree ma thesis exhibited in tabakalera',
+      description: 'final degree MA thesis exhibited at Tabakalera',
       year: '2023',
       image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat3.jpg',
       isExternal: false,
@@ -228,6 +259,7 @@ const Home = () => {
           .filter(num => num !== 6)
           .map(num => `https://majindonpatch-public.s3.eu-west-2.amazonaws.com/tapetum_lucidum/tapetum_pics/${num}.jpg`),
         text3: '<strong>1st of June of 2023, Elías Querejeta Zine Eskola. While showing him <em>tapetum lucidum</em>, Pol Crosas interviews Pedro Costa about the nature of artificial intelligence generated images and how they dialogue with contemporary cinema.</strong>',
+        image3: 'https://cati-eclipse.s3.eu-west-2.amazonaws.com/WhatsApp+Image+2026-11-13+at+12.08.27.jpeg',
         pdf: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/tapetum_lucidum/acabat_alta.pdf'
       }
     },
@@ -295,9 +327,14 @@ const Home = () => {
       description: 'atractive_smithers fanzine',
       year: '2022',
       image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat7.jpg',
-      link: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/pol/pdfs/carglass.pdf',
-      isExternal: true,
-      buttonLabel: 'download pdf'
+      isExternal: false,
+      content: {
+        linksBelow: [
+          { text: 'download pdf', url: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/pol/pdfs/carglass.pdf' }
+        ],
+        text: '<p style="margin-bottom: 2px">here\'s a surprise secret music video:</p>',
+        videos: ['https://www.youtube.com/embed/iJq4iw4vjFc']
+      }
     },
     
     // 2021
@@ -317,7 +354,7 @@ const Home = () => {
       description: '24h nonstop publishing residency with eze',
       year: '2021',
       image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat5.jpg',
-      link: 'https://artefactosnativos.com/hiperpublicacion.html',
+      link: 'http://artefactosnativos.com/hiperpublicacion.html',
       isExternal: true,
       buttonLabel: 'go to artefactos nativos'
     },
@@ -348,7 +385,7 @@ const Home = () => {
     {
       id: 'rxtx',
       title: 'rxtx',
-      description: 'virtual flamethrower in an online exhibition',
+      description: ' flamethrower model at a virtual exhibition',
       year: '2020',
       image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat12.jpg',
       isExternal: false,
@@ -364,7 +401,6 @@ const Home = () => {
       image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/website2/jpg_quadrat/proves_cuadrat.jpg',
       isExternal: false,
       content: {
-        image: 'https://majindonpatch-public.s3.eu-west-2.amazonaws.com/serbal/serbal_pic.jpg',
         text: '<p style="line-height: 1.6; margin-bottom: 20px"><em>Et sic in infinitum,</em> is born in 1617 in the treatise <em>Utriusque cosmi maioris scilicet et minoris metaphysica, physica atque technica historia in duo volumina secundum cosmi differentiam divisa</em> by the English Rosicrucian physician, inventor, astrologer, urinomancer, geomancer, and metaphysician, Robert Fludd (1574-1637), whom we conjure as the guardian angel of this fanzine. On page 26 surrounded by four <em>et sic in infinitums,</em> we encounter a black square delineating a map of primordial matter or the primordial being before creation.</p>',
         links: [
           { text: 'instagram', url: 'https://www.instagram.com/serbal.pntic.mec.es/' },
@@ -685,17 +721,12 @@ const Home = () => {
       
       {/* Bio Section - Dropdown */}
       {bioOpen && (
-        <div style={{
-          border: '1px solid #000',
-          borderTop: 'none',
-          padding: '20px',
-          marginBottom: '0'
-        }}>
-          <p style={{ marginBottom: '15px', lineHeight: '1.6' }}>
-            pol crosas (b. 1999, barcelona) is an artist and curator whose practice encompasses film, publishing, artificial intelligence, and visual/digital arts. he holds a bachelor's degree in fine arts from the university of barcelona and an ma in curation and creation at elías querejeta zine eskola. he is a member of the obobo collective, working alongside domenec miralles and gustavo cilleruelo in the field of artificial intelligence-driven creation. he is also a member of atractive_smithers, barcelona based shitposting group.
+        <div className="bio-dropdown">
+          <p className="bio-p1">
+            Pol Crosas (b. 1999, Barcelona) is artist and curator working with vernacular media rooted in digital folklore, from zines and video to open-source AI. He is a member of obobo, an AI creation collective founded with Domenec Miralles and Gustavo Cilleruelo, and a member of atractive_smithers, a shitposting group featured in PhD research.
           </p>
-          <p style={{ marginBottom: '15px', lineHeight: '1.6' }}>
-            pol has curated and exhibited in various spaces in barcelona, san sebastián, and london. he has created and installed publications, video pieces, and sculptures in venues such as tabakalera, colour factory london, arts libris, gallery46, among others. he has curated film cycles, collaborative publications, and concert series at arts santa mònica, tabakalera, rocío santa cruz, galeria dels àngels, dabadaba, and pumarejo, among others. he has published or self-published over 20 artist books, fanzines, catalogs, and comics.
+          <p className="bio-p2">
+            His work has been shown at CCCB, Tabakalera, La Capella, Hangar.org and Gallery46. He has curated at Tabakalera, Arts Santa Mònica and Pumarejo, and has published or self-published over 20 fanzines, artist books and catalogs, including tapetum lucidum (2024) and the design of Miguel Noguera's Mundo Violencia (2026).
           </p>
           <div className="bio-socials">
             <a href="https://www.instagram.com/huidaespectacular1999" target="_blank" rel="noreferrer">instagram</a>
@@ -740,7 +771,7 @@ const Home = () => {
                 <div className="project-dropdown" ref={dropdownRef}>
                   <div className="dropdown-content">
                     {/* Handle external projects with button */}
-                    {projects.find(p => p.id === openProject)?.isExternal ? (
+                     {projects.find(p => p.id === openProject)?.isExternal ? (
                       <div style={{ textAlign: 'center', padding: '40px 20px' }}>
                         <a
                           href={projects.find(p => p.id === openProject).link}
@@ -759,6 +790,11 @@ const Home = () => {
                         >
                           {projects.find(p => p.id === openProject).buttonLabel}
                         </a>
+                        {projects.find(p => p.id === openProject).text && (
+                          <p style={{ marginTop: '30px', lineHeight: '1.8', maxWidth: '700px', margin: '30px auto 0', textAlign: 'left' }}>
+                            {projects.find(p => p.id === openProject).text}
+                          </p>
+                        )}
                       </div>
                     ) : projects.find(p => p.id === openProject)?.content && (
                       <>
@@ -766,19 +802,21 @@ const Home = () => {
                           renderTarotInteractive()
                         ) : (
                           <>
-                            {openProject === 'serbal' && projects.find(p => p.id === openProject).content.text && projects.find(p => p.id === openProject).content.image ? (
-                              <div className="serbal-layout">
-                                <div className="serbal-content">
-                                  <div style={{ lineHeight: '1.6', marginBottom: '20px' }} dangerouslySetInnerHTML={{ __html: projects.find(p => p.id === openProject).content.text }} />
+                            {openProject === 'serbal' && projects.find(p => p.id === openProject).content.text ? (
+                              <>
+                                <div className="serbal-layout">
+                                  <div className="serbal-content">
+                                    <div style={{ lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: projects.find(p => p.id === openProject).content.text }} />
+                                  </div>
                                   {projects.find(p => p.id === openProject).content.links && (
-                                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                    <div className="serbal-links">
                                       {projects.find(p => p.id === openProject).content.links.map((link, i) => (
                                         <a
                                           key={i}
                                           href={link.url}
                                           target="_blank"
                                           rel="noopener noreferrer"
-                                          style={{ padding: '10px 20px', border: '1px solid #000', display: 'inline-block' }}
+                                          style={{ padding: '10px 20px', border: '1px solid #000', display: 'block' }}
                                         >
                                           {link.text}
                                         </a>
@@ -786,12 +824,22 @@ const Home = () => {
                                     </div>
                                   )}
                                 </div>
-                                <img
-                                  src={projects.find(p => p.id === openProject).content.image}
-                                  alt={projects.find(p => p.id === openProject).title}
-                                  className="serbal-image"
-                                />
-                              </div>
+                                {projects.find(p => p.id === openProject).content.videos && (
+                                  <div className="dropdown-videos">
+                                    {projects.find(p => p.id === openProject).content.videos.map((video, i) => (
+                                      <div key={i} className="video-container">
+                                        <iframe
+                                          src={video}
+                                          title={`${projects.find(p => p.id === openProject).title} ${i + 1}`}
+                                          frameBorder="0"
+                                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                          allowFullScreen
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </>
                             ) : (
                               <>
                                 {projects.find(p => p.id === openProject).content.text && (
@@ -824,7 +872,7 @@ const Home = () => {
                               </>
                             )}
                             
-                            {projects.find(p => p.id === openProject).content.videos && (
+                            {projects.find(p => p.id === openProject).content.videos && openProject !== 'serbal' && (
                           openProject === 'cosas_de_casa' ? (
                             <div className="cosas-de-casa-grid">
                               {projects.find(p => p.id === openProject).content.videos.map((video, i) => (
@@ -856,6 +904,22 @@ const Home = () => {
                           )
                         )}
                         
+                        {projects.find(p => p.id === openProject).content.linksBelow && (
+                          <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                            {projects.find(p => p.id === openProject).content.linksBelow.map((link, i) => (
+                              <a
+                                key={i}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ display: 'inline-block', padding: '10px 20px', border: '1px solid #000' }}
+                              >
+                                {link.text}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+
                         {projects.find(p => p.id === openProject).content.text2 && (
                           <div style={{ marginBottom: '20px', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: projects.find(p => p.id === openProject).content.text2 }} />
                         )}
@@ -887,6 +951,14 @@ const Home = () => {
                         {projects.find(p => p.id === openProject).content.text3 && (
                           <div style={{ marginBottom: '20px', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: projects.find(p => p.id === openProject).content.text3 }} />
                         )}
+
+                        {projects.find(p => p.id === openProject).content.image3 && (
+                          <img
+                            src={projects.find(p => p.id === openProject).content.image3}
+                            alt={projects.find(p => p.id === openProject).title}
+                            style={{ width: '100%', marginBottom: '20px' }}
+                          />
+                        )}
                         
                         {projects.find(p => p.id === openProject).content.pdf && (
                           <a
@@ -898,6 +970,7 @@ const Home = () => {
                             download pdf
                           </a>
                         )}
+
                           </>
                         )}
                       </>
@@ -916,6 +989,9 @@ const Home = () => {
           src="https://majindonpatch-public.s3.eu-west-2.amazonaws.com/capella/logos.png"
           alt="logos"
         />
+        <p style={{ fontSize: '11px', lineHeight: '1.5', marginTop: '10px', color: '#000' }}>
+          Aquesta actuació està impulsada i subvencionada pel Departament d'Empresa i Treball i cofinançada per la Unió Europea mitjançant el Fons Social Europeu Plus.
+        </p>
       </div>
     </div>
   );
