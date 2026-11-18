@@ -116,6 +116,7 @@ const Home = () => {
       isExternal: false,
       content: {
         image: 'https://cati-eclipse.s3.eu-west-2.amazonaws.com/IMG_9565.JPG',
+        contentBrightness: 0.9,
         linksBelow: [
           { text: 'download pdf', url: 'https://cati-eclipse.s3.eu-west-2.amazonaws.com/mundoviolencia.pdf' },
           { text: 'purchase', url: 'https://fatbottombooks.com/es/books/illustration/mundo-violencia' }
@@ -776,7 +777,7 @@ const Home = () => {
                 className={`entry-card ${openProject === project.id ? 'active' : ''}`}
                 style={{ cursor: 'pointer' }}
               >
-                <img src={project.image} alt={project.title} />
+                <img src={project.image} alt={project.title} style={project.cardBrightness ? { filter: `brightness(${project.cardBrightness})` } : undefined} />
                 <div className="entry-info">
                   <div className="entry-title">{project.title}</div>
                   <div className="entry-description">{project.description}</div>
@@ -883,7 +884,7 @@ const Home = () => {
                                       <img
                                         src={projects.find(p => p.id === openProject).content.image}
                                         alt={projects.find(p => p.id === openProject).title}
-                                        style={{ width: '100%', maxWidth: '900px', ...(projects.find(p => p.id === openProject).content.noBrightness ? {} : { filter: 'brightness(0.75)' }) }}
+                                        style={{ width: '100%', maxWidth: '900px', ...(projects.find(p => p.id === openProject).content.contentBrightness != null ? { filter: `brightness(${projects.find(p => p.id === openProject).content.contentBrightness})` } : projects.find(p => p.id === openProject).content.noBrightness ? {} : { filter: 'brightness(0.75)' }) }}
                                       />
                                     )}
                                   </div>
