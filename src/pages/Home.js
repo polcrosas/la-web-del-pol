@@ -39,6 +39,7 @@ const Home = () => {
   const [inoutImagesLoaded, setInoutImagesLoaded] = useState(false);
   const [tapetumImagesLoaded, setTapetumImagesLoaded] = useState(false);
   const [muImagesLoaded, setMuImagesLoaded] = useState(false);
+  const [singleImageLoaded, setSingleImageLoaded] = useState({});
   const dropdownRef = useRef(null);
   
   // Check for preferred start page (for iOS PWA)
@@ -435,10 +436,24 @@ const Home = () => {
   const blanksNeeded = itemsPerRow - (projects.length % itemsPerRow);
   const blankSquares = blanksNeeded === itemsPerRow ? [] : Array(blanksNeeded).fill(null);
 
+  const SINGLE_IMAGE_PROJECTS = ['mundo_violencia', 'cundits', 'carglass'];
+
   const handleProjectClick = (project) => {
     setBioOpen(false); // Close bio when opening a project
     const newOpenProject = openProject === project.id ? null : project.id;
     setOpenProject(newOpenProject);
+
+    // If opening a single-image project, preload its content image
+    if (newOpenProject && SINGLE_IMAGE_PROJECTS.includes(newOpenProject)) {
+      setSingleImageLoaded(prev => ({ ...prev, [newOpenProject]: false }));
+      const proj = projects.find(p => p.id === newOpenProject);
+      if (proj?.content?.image) {
+        const img = new Image();
+        img.onload = () => setSingleImageLoaded(prev => ({ ...prev, [newOpenProject]: true }));
+        img.onerror = () => setSingleImageLoaded(prev => ({ ...prev, [newOpenProject]: true }));
+        img.src = proj.content.image;
+      }
+    }
     
     // If opening inout project, preload its images
     if (newOpenProject === 'inout') {
@@ -852,11 +867,25 @@ const Home = () => {
                               <>
                                 {projects.find(p => p.id === openProject).content.image && (
                                   <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                                    <img
-                                      src={projects.find(p => p.id === openProject).content.image}
-                                      alt={projects.find(p => p.id === openProject).title}
-                                      style={{ width: '100%', maxWidth: '900px', ...(projects.find(p => p.id === openProject).content.noBrightness ? {} : { filter: 'brightness(0.75)' }) }}
-                                    />
+                                    {SINGLE_IMAGE_PROJECTS.includes(openProject) && !singleImageLoaded[openProject] ? (
+                                      <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                        <video
+                                          autoPlay
+                                          loop
+                                          muted
+                                          playsInline
+                                          style={{ width: '75px', height: '75px' }}
+                                        >
+                                          <source src="/charging_gif.mp4" type="video/mp4" />
+                                        </video>
+                                      </div>
+                                    ) : (
+                                      <img
+                                        src={projects.find(p => p.id === openProject).content.image}
+                                        alt={projects.find(p => p.id === openProject).title}
+                                        style={{ width: '100%', maxWidth: '900px', ...(projects.find(p => p.id === openProject).content.noBrightness ? {} : { filter: 'brightness(0.75)' }) }}
+                                      />
+                                    )}
                                   </div>
                                 )}
 
